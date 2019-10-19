@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="06801712-77cb-47d8-825a-7bfc6ddb77bf" name="Default Changelist" comment="" />
+    <list default="true" id="06801712-77cb-47d8-825a-7bfc6ddb77bf" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/src4/DF2.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/src4/SearchDF1.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/src4/SearchDF2.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JADE tutorial/META-INF/JADE tutorial.kotlin_module" beforeDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,9 +21,15 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
   <component name="ProjectId" id="1RcYHgRa1bVS3GZ5WGzvbjyOAgj" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$USER_HOME$/Downloads/JADE-all-4.5.0/jade/lib/jade.jar!/" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.2" />
@@ -49,7 +61,7 @@
     <configuration name="JADE" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="jade.Boot" />
       <module name="JADE tutorial" />
-      <option name="PROGRAM_PARAMETERS" value="-name platform a1:src3.responder;a2:src3.responder;main:src3.mainTemplate" />
+      <option name="PROGRAM_PARAMETERS" value="-name platform stoopid:src4.SearchDF2;huH:src4.DF2" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -67,5 +79,16 @@
       <updated>1569967764394</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
