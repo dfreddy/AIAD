@@ -7,9 +7,7 @@ import java.util.Random;
 
 public class seller extends Agent {
     Random rnd = newRandom();
-    MessageTemplate template =
-            MessageTemplate.MatchPerformative( ACLMessage.QUERY_REF );
-
+    MessageTemplate template = MessageTemplate.MatchPerformative( ACLMessage.QUERY_REF );
     ACLMessage reply;
 
     protected void setup() {
@@ -46,9 +44,8 @@ public class seller extends Agent {
 
 
 //  --- generating distinct Random generator -------------------
-
-    Random newRandom()
-    {	return  new Random( hashCode() + System.currentTimeMillis()); }
-
+    Random newRandom() {
+        return new Random( hashCode() + System.currentTimeMillis());
+    }
 }
 

@@ -2,16 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="06801712-77cb-47d8-825a-7bfc6ddb77bf" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/src5/buyer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/delay.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/delayBehaviour.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/parBuyer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/receiver.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/receiverBehaviour.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/seller.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/ticker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/waker.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/src5/buyer2.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/src5/seller2.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/src5/transaction.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/parBuyer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/parBuyer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/seller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/seller.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -70,7 +66,7 @@
     <configuration name="JADE" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="jade.Boot" />
       <module name="JADE tutorial" />
-      <option name="PROGRAM_PARAMETERS" value="-name platform buyer:src5.parBuyer;s1:src5.seller;s2:src5.seller;s3:src5.seller" />
+      <option name="PROGRAM_PARAMETERS" value="-name platform james:src5.buyer2;russ:src5.buyer2;s1:src5.seller2;s2:src5.seller2;s3:src5.seller2" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>

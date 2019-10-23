@@ -23,7 +23,7 @@ public class parBuyer extends Agent {
         addBehaviour(seq);
 
         ParallelBehaviour par = new ParallelBehaviour( ParallelBehaviour.WHEN_ALL );
-        seq.addSubBehaviour( par );
+        seq.addSubBehaviour(par);
 
         for (int i = 1; i<=3; i++) {
             msg.addReceiver(new AID( "s" + i,  AID.ISLOCALNAME ));
