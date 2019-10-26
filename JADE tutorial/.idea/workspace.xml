@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="06801712-77cb-47d8-825a-7bfc6ddb77bf" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/src5/buyer2.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/seller2.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/src5/transaction.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/src5/parBuyer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/parBuyer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/src5/seller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/seller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/buyer2.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/buyer2.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/receiverBehaviour.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/receiverBehaviour.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/seller2.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/seller2.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/src5/transaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/src5/transaction.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

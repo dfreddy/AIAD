@@ -5,7 +5,12 @@ import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
+
 import static java.lang.Integer.parseInt;
 
 public class buyer2 extends Agent {
@@ -91,7 +96,7 @@ public class buyer2 extends Agent {
     }
 
     // ========== Utility methods =========================
-//  --- generating Conversation IDs -------------------
+    //  --- generating Conversation IDs -------------------
     protected static int cidCnt = 0;
     String cidBase ;
 
@@ -119,5 +124,50 @@ public class buyer2 extends Agent {
 
     Random newRandom() {
         return new Random( hashCode() + System.currentTimeMillis());
+    }
+
+    // Garbage Disposal
+    class GCAgent extends TickerBehaviour {
+        Set seen = new HashSet(),
+            old  = new HashSet();
+
+        GCAgent(Agent a, long dt) { super(a,dt); }
+
+        protected void onTick() {
+            ACLMessage msg = myAgent.receive();
+            while (msg != null) {
+                if (! old.contains(msg))
+                    seen.add( msg);
+                else {
+                    System.out.println("==" + getLocalName() + " <- Flushing message:");
+                    dumpMessage( msg );
+                }
+                msg = myAgent.receive();
+            }
+
+            for(Iterator it = seen.iterator(); it.hasNext(); )
+                myAgent.putBack( (ACLMessage) it.next() );
+
+            old.clear();
+            Set tmp = old;
+            old = seen;
+            seen = tmp;
+        }
+    }
+    static long t0 = System.currentTimeMillis();
+
+    void dumpMessage( ACLMessage msg ) {
+        System.out.print( "t=" + (System.currentTimeMillis()-t0)/1000F + " in "
+                + getLocalName() + ": "
+                + ACLMessage.getPerformative(msg.getPerformative() ));
+
+        System.out.print( "  from: " +
+                (msg.getSender()==null ? "null" : msg.getSender().getLocalName())
+                +  " --> to: ");
+
+        for (Iterator it = msg.getAllReceiver(); it.hasNext();)
+            System.out.print( ((AID) it.next()).getLocalName() + ", ");
+        System.out.println( "  cid: " + msg.getConversationId());
+        System.out.println( "  content: " +  msg.getContent());
     }
 }

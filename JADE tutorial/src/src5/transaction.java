@@ -10,16 +10,18 @@ class transaction extends SequentialBehaviour {
     ACLMessage msg, reply;
     String ConvID;
     int price;
+    int result;
 
     public transaction(Agent a, ACLMessage msg, int price) {
         super(a);
         this.msg = msg;
         ConvID = msg.getConversationId();
         this.price = price;
+        this.result = 0;
     }
 
     public void onStart() {
-        addSubBehaviour( new delayBehaviour( myAgent, rnd.nextInt( 1000 )) {
+        addSubBehaviour(new delayBehaviour( myAgent, rnd.nextInt( 1000 )) {
             public void handleElapsedTimeout() {
                 System.out.println(myAgent.getLocalName() + " <- QUERY from " +
                         msg.getSender().getLocalName() +
@@ -47,16 +49,22 @@ class transaction extends SequentialBehaviour {
                         reply.setPerformative(ACLMessage.AGREE);
                     else {
                         reply.setPerformative(ACLMessage.REFUSE);
+                        result = 1;
                     }
                     myAgent.send(reply);
                 }
                 else {
+                    result = 1;
                     System.out.println("Timeout!! $" + price +
                             " from " + myAgent.getLocalName() +
                             " is no longer valid");
                 }
             }
         });
+    }
+
+    public int getResult() {
+        return result;
     }
 
     Random newRandom() {

@@ -36,7 +36,7 @@ public class receiverBehaviour extends SimpleBehaviour {
         else
             msg = myAgent.receive(template);
 
-        if( msg != null) {
+        if(msg != null) {
             finished = true;
             handle( msg );
             return;

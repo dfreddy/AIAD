@@ -2,14 +2,22 @@ package src5;
 
 // RUN -name platform james:src5.buyer2;russ:src5.buyer2;s1:src5.seller2;s2:src5.seller2;s3:src5.seller2
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
+
+import java.lang.reflect.Array;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 public class seller2 extends Agent {
     Random rnd = newRandom();
-    int price  = rnd.nextInt(100);
+    int price  = rnd.nextInt(100),
+        transactions = 0,
+        results = 0;
 
     // int stock/available_spots;
     // int income;
@@ -20,21 +28,42 @@ public class seller2 extends Agent {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
                 if (msg != null) { // handle received msg
-                    addBehaviour(new transaction(myAgent, msg, getPrice()));
+                    SequentialBehaviour t = new transaction(myAgent, msg, getPrice()) {
+                        public int onEnd() {
+                            int r = getResult();
+                            transactions++;
+                            results += r;
+
+                            // System.out.println("Added result " + r + " to " + myAgent.getLocalName());
+                            // System.out.println(myAgent.getLocalName() + " has " + transactions + " transactions");
+                            return super.onEnd();
+                        }
+                    };
+                    addBehaviour(t);
                 }
                 else block();
             }
         });
 
+        addBehaviour(new GCAgent(this, 5000));
+
+        //  CHECKING FOR UPDATING PRICE EVERY x SECONDS
+        //  UPDATES PRICE ONLY IF THE SELLER CANT SELL ON ALL TRANSACTIONS
         addBehaviour(new TickerBehaviour(this, 2000) {
             protected void onTick() {
-                updatePrice();
+                if (transactions == 0) return;
+
+                // System.out.println(myAgent.getLocalName() + "\nnr transactions: " + transactions + "\nResults: " + results);
+                if(results == transactions) updatePrice();
+
+                results = 0;
+                transactions = 0;
             }
         });
     }
 
     private void updatePrice() {
-        int p = (int)(this.price * 0.9);
+        int p = (int)(this.price * 0.7);
         this.price = p;
         System.out.println(getLocalName() + " <- updating prices");
     }
@@ -57,5 +86,49 @@ public class seller2 extends Agent {
 
     Random newRandom() {
         return new Random( hashCode() + System.currentTimeMillis());
+    }
+    // Garbage Disposal
+    class GCAgent extends TickerBehaviour {
+        Set seen = new HashSet(),
+                old  = new HashSet();
+
+        GCAgent(Agent a, long dt) { super(a,dt); }
+
+        protected void onTick() {
+            ACLMessage msg = myAgent.receive();
+            while (msg != null) {
+                if (! old.contains(msg))
+                    seen.add( msg);
+                else {
+                    System.out.println("==" + getLocalName() + " <- Flushing message:");
+                    dumpMessage( msg );
+                }
+                msg = myAgent.receive();
+            }
+
+            for(Iterator it = seen.iterator(); it.hasNext(); )
+                myAgent.putBack( (ACLMessage) it.next() );
+
+            old.clear();
+            Set tmp = old;
+            old = seen;
+            seen = tmp;
+        }
+    }
+    static long t0 = System.currentTimeMillis();
+
+    void dumpMessage( ACLMessage msg ) {
+        System.out.print( "t=" + (System.currentTimeMillis()-t0)/1000F + " in "
+                + getLocalName() + ": "
+                + ACLMessage.getPerformative(msg.getPerformative() ));
+
+        System.out.print( "  from: " +
+                (msg.getSender()==null ? "null" : msg.getSender().getLocalName())
+                +  " --> to: ");
+
+        for (Iterator it = msg.getAllReceiver(); it.hasNext();)
+            System.out.print( ((AID) it.next()).getLocalName() + ", ");
+        System.out.println( "  cid: " + msg.getConversationId());
+        System.out.println( "  content: " +  msg.getContent());
     }
 }
