@@ -1,0 +1,75 @@
+package behaviours;
+
+import behaviours.*;
+import behaviours.ReceiverBehaviour;
+import jade.core.Agent;
+import jade.core.behaviours.*;
+import jade.lang.acl.*;
+import java.util.Random;
+
+public class Transaction extends SequentialBehaviour {
+    Random rnd = newRandom();
+    ACLMessage msg, reply;
+    String ConvID;
+    int price;
+    int result;
+
+    public Transaction(Agent a, ACLMessage msg, int price) {
+        super(a);
+        this.msg = msg;
+        ConvID = msg.getConversationId();
+        this.price = price;
+        this.result = 0;
+    }
+
+    public void onStart() {
+        addSubBehaviour(new DelayBehaviour( myAgent, rnd.nextInt( 1000 )) {
+            public void handleElapsedTimeout() {
+                System.out.println(myAgent.getLocalName() + " <- QUERY from " +
+                        msg.getSender().getLocalName() +
+                        ". Will answer with $" + price);
+
+                reply = msg.createReply();
+                reply.setPerformative( ACLMessage.INFORM );
+                reply.setContent("" + price);
+                myAgent.send(reply);
+            }
+        });
+
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative( ACLMessage.REQUEST ),
+                MessageTemplate.MatchConversationId( ConvID ));
+
+        addSubBehaviour(new ReceiverBehaviour(myAgent, 2000, template) {
+            public void handle( ACLMessage msg1) {
+                if (msg1 != null ) {
+                    int offer = Integer.parseInt(msg1.getContent());
+
+                    // RANDOM BASED BARTERING
+                    reply = msg1.createReply();
+                    if (offer >= rnd.nextInt(price))
+                        reply.setPerformative(ACLMessage.AGREE);
+                    else {
+                        reply.setPerformative(ACLMessage.REFUSE);
+                        result = 1;
+                    }
+                    myAgent.send(reply);
+                }
+                else {
+                    result = 1;
+                    System.out.println("Timeout!! $" + price +
+                            " from " + myAgent.getLocalName() +
+                            " is no longer valid");
+                }
+            }
+        });
+    }
+
+    public int getResult() {
+        return result;
+    }
+
+    Random newRandom() {
+        return new Random( hashCode() + System.currentTimeMillis());
+    }
+}
