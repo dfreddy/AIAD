@@ -61,8 +61,7 @@ public class SearchDF2 extends Agent {
         ServiceDescription sd = new ServiceDescription();
         sd.setType( service );
         dfd.addServices(sd);
-        try
-        {
+        try {
             DFAgentDescription[] result = DFService.search(this, dfd);
             if (result.length>0)
                 return result[0].getName() ;

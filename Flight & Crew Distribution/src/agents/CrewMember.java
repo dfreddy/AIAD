@@ -34,6 +34,7 @@ public class CrewMember extends Agent {
         ParallelBehaviour par = new ParallelBehaviour( ParallelBehaviour.WHEN_ALL );
 
         for (int i = 1; i<=3; i++) {
+            // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
             msg.addReceiver( new AID( "s" + i,  AID.ISLOCALNAME ));
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 2000, template) {
