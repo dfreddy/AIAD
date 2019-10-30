@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class Transaction extends SequentialBehaviour {
     Random rnd = newRandom();
-    ACLMessage msg, reply;
+    ACLMessage msg, reply, barter_reply = null;
     String ConvID;
     int price;
     int result;
@@ -23,7 +23,7 @@ public class Transaction extends SequentialBehaviour {
     }
 
     public void onStart() {
-        addSubBehaviour(new DelayBehaviour( myAgent, rnd.nextInt( 1000 )) {
+        addSubBehaviour(new DelayBehaviour( myAgent, rnd.nextInt(1000)) {
             public void handleElapsedTimeout() {
                 System.out.println(myAgent.getLocalName() + " <- QUERY from " +
                         msg.getSender().getLocalName() +
@@ -46,20 +46,27 @@ public class Transaction extends SequentialBehaviour {
                     int offer = Integer.parseInt(msg1.getContent());
 
                     // RANDOM BASED BARTERING
-                    reply = msg1.createReply();
-                    if (offer >= rnd.nextInt(price))
-                        reply.setPerformative(ACLMessage.AGREE);
-                    else {
-                        reply.setPerformative(ACLMessage.REFUSE);
-                        result = 1;
+                    barter_reply = msg1.createReply();
+                    barter_reply.setPerformative(ACLMessage.REFUSE);
+                    barter_reply.setContent("" + offer);
+                    return;
+                    /*
+                    if (offer >= rnd.nextInt(price/2)) {
+                        barter_reply.setPerformative(ACLMessage.AGREE);
+                        barter_reply.setContent("" + offer);
                     }
-                    myAgent.send(reply);
+                    else {
+                        barter_reply.setPerformative(ACLMessage.REFUSE);
+                        barter_reply.setContent("" + offer);
+                        result = 1;
+                        myAgent.send(barter_reply);
+                    }
+                    */
                 }
                 else {
-                    result = 1;
                     System.out.println("Timeout!! $" + price +
                             " from " + myAgent.getLocalName() +
-                            " is no longer valid");
+                            " is no longer valid. " + msg.getSender().getLocalName() + " took long to respond");
                 }
             }
         });
@@ -68,6 +75,8 @@ public class Transaction extends SequentialBehaviour {
     public int getResult() {
         return result;
     }
+
+    public ACLMessage getBarterReply() { return barter_reply; }
 
     Random newRandom() {
         return new Random( hashCode() + System.currentTimeMillis());
