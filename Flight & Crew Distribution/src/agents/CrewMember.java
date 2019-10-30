@@ -1,26 +1,68 @@
 package agents;
 
-import behaviours.*;
+import behaviours.DelayBehaviour;
 import behaviours.ReceiverBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.*;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
-import static java.lang.Integer.parseInt;
 
 public class CrewMember extends Agent {
     Random rnd = newRandom();
     int bestPrice = 9999;
     ACLMessage msg, bestOffer;
+    //Experience measures is from 0 to 100 and is calculated regarding other parameters
+    int experience;
+    String rank;
+
+    void defineCrewRank(){
+        Random rnd = newRandom();
+        int rndRank = rnd.nextInt(100);
+        if(rndRank <= 15)
+            rank = "PILOT";
+        else if( rndRank > 15 && rndRank <= 30)
+            rank = "CABIN_CHIEF";
+        else
+            rank = "ATTENDANT";
+    }
+
+    void calculateExperience() {
+        double exp = 0;
+        Random rnd = newRandom();
+        int flightTime;
+        int monthWorkingInAirline;
+
+        flightTime = rnd.nextInt(1000);
+        monthWorkingInAirline = rnd.nextInt(480);
+        int flightTimeScore = (int) Math.ceil((flightTime*1000)/100);
+        int monthWorkingInAirlineScore = (int) Math.ceil((monthWorkingInAirline*480)/100);
+
+        if(rank == "PILOT")
+            exp = 0.8*flightTimeScore + 0.2*monthWorkingInAirlineScore;
+        else if(rank == "CABIN_CHIEF")
+            exp = 0.6*flightTimeScore + 0.4*monthWorkingInAirlineScore;
+        else
+            exp = 0.4*flightTimeScore + 0.6*monthWorkingInAirlineScore;
+
+        experience = (int) Math.ceil(exp);
+    }
 
     protected void setup() {
         bestPrice = 9999;
         bestOffer = null;
+
+        //defines the crew rank (ex. pilot, cabin chief, attendant)
+        defineCrewRank();
+        //calculates the experience inside the airline
+        calculateExperience();
 
         msg = newMsg( ACLMessage.QUERY_REF );
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry excluding="agents/" kind="src" path="Flight &amp; Crew Distribution/src"/>
+	<classpathentry kind="src" path="Flight &amp; Crew Distribution/src/agents"/>
+	<classpathentry kind="src" path="JADE tutorial/src"/>
+	<classpathentry kind="output" path="Flight &amp; Crew Distribution/out/production/Flight &amp; Crew Distribution"/>
+</classpath>
