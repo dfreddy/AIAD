@@ -40,6 +40,10 @@ public class Airport {
             if (p.getBooleanProperty("main", true)) {
                 ContainerController containerController = Runtime.instance().createMainContainer(p);
 
+
+                AgentController bigBrotherController = containerController.createNewAgent("big_brother", "agents.BigBrotherAgent", null);
+                bigBrotherController.start();
+
                 // create agents: 1 airplane "s1" and 1 crew member "crew_member"
                 AgentController airplaneController = containerController.createNewAgent("s1", "agents.Airplane", null);
                 airplaneController.start();
