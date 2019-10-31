@@ -7,22 +7,22 @@ import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.Set;
+
+import java.util.*;
+
 import static java.lang.Integer.parseInt;
 
 public class CrewMember extends Agent {
-    Random rnd = newRandom();
-    int bestPrice = 9999;
-    ACLMessage msg, bestOffer;
+    private Random rnd = newRandom();
+    private int bestPrice = 9999;
+    private ACLMessage bestOffer;
 
+    private String [] airportNameList;
     protected void setup() {
         bestPrice = 9999;
         bestOffer = null;
 
-        msg = newMsg( ACLMessage.QUERY_REF );
+        ACLMessage msg = newMsg(ACLMessage.QUERY_REF);
 
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative( ACLMessage.INFORM ),
@@ -33,9 +33,10 @@ public class CrewMember extends Agent {
 
         ParallelBehaviour par = new ParallelBehaviour( ParallelBehaviour.WHEN_ALL );
 
-        for (int i = 1; i<=3; i++) {
+
+        for (int i = 0; i < airportNameList.length; i++) {
             // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
-            msg.addReceiver( new AID( "s" + i,  AID.ISLOCALNAME ));
+            msg.addReceiver( new AID( airportNameList[i],  AID.ISLOCALNAME ));
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
                 public void handle(ACLMessage msg) {
@@ -74,12 +75,19 @@ public class CrewMember extends Agent {
         // template match <...CID &  AGREE or REFUSE ...>
         MessageTemplate receiverTemplate = MessageTemplate.and(
                 MessageTemplate.MatchConversationId(msg.getConversationId()), MessageTemplate.or(
-                        MessageTemplate.MatchPerformative(ACLMessage.AGREE), MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
+                        MessageTemplate.MatchPerformative(ACLMessage.AGREE)
+                        , MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
                 ));
 
-        seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, receiverTemplate){
+
+        seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, null){
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
+                    if( msg.getPerformative() == ACLMessage.INFORM){
+                        airportNameList = msg.getContent().split(";");
+                        System.out.println(myAgent.getLocalName() + " got airport list: " + msg.getContent());
+                        return;
+                    }
                     if( msg.getPerformative() == ACLMessage.AGREE)
                         System.out.println("\n==" + getLocalName() + " <- GOT ACCEPTED by " + msg.getSender().getLocalName());
                     else {
@@ -100,10 +108,10 @@ public class CrewMember extends Agent {
 
     // ========== Utility methods =========================
     //  --- generating Conversation IDs -------------------
-    protected static int cidCnt = 0;
-    String cidBase ;
+    private static int cidCnt = 0;
+    private String cidBase ;
 
-    String genCID() {
+    private String genCID() {
         if (cidBase==null) {
             cidBase = getLocalName() + hashCode() +
                     System.currentTimeMillis()%10000 + "_";
@@ -119,13 +127,13 @@ public class CrewMember extends Agent {
         return msg;
     }
 
-    ACLMessage newMsg(int perf) {
+    private ACLMessage newMsg(int perf) {
         ACLMessage msg = new ACLMessage(perf);
         msg.setConversationId( genCID() );
         return msg;
     }
 
-    Random newRandom() {
+    private Random newRandom() {
         return new Random( hashCode() + System.currentTimeMillis());
     }
 
@@ -159,7 +167,7 @@ public class CrewMember extends Agent {
     }
     static long t0 = System.currentTimeMillis();
 
-    void dumpMessage( ACLMessage msg ) {
+    private void dumpMessage(ACLMessage msg) {
         System.out.print( "t=" + (System.currentTimeMillis()-t0)/1000F + " in "
                 + getLocalName() + ": "
                 + ACLMessage.getPerformative(msg.getPerformative() ));

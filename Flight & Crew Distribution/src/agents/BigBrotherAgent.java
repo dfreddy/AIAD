@@ -6,6 +6,10 @@ import jade.core.AID;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.*;
+import jade.lang.acl.ACLMessage;
+
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class BigBrotherAgent extends Agent
 {
@@ -16,7 +20,7 @@ public class BigBrotherAgent extends Agent
                 AMSAgentDescription [] agents = null;
                 try {
                     SearchConstraints c = new SearchConstraints();
-                    c.setMaxResults (new Long(-1));
+                    c.setMaxResults ((long) -1);
                     agents = AMSService.search( BigBrotherAgent.this, new AMSAgentDescription (), c );
                 }
                 catch (Exception e) {
@@ -24,16 +28,29 @@ public class BigBrotherAgent extends Agent
                     e.printStackTrace();
                 }
 
-                AID myID = getAID();
-                for (int i=0; i<agents.length;i++)
-                {
-                    AID agentID = agents[i].getName();
-                    System.out.println(
-                            ( agentID.equals( myID ) ? "*** " : "    ")
-                                    + i + ": " + agentID.getName()
-                    );
+                StringBuilder airportListString = new StringBuilder();
+                for(AMSAgentDescription mAgent : agents){
+                    if(mAgent.getName().getName().startsWith("s")){
+                        airportListString.append(mAgent.getName().getLocalName()).append(";");
+                    }
                 }
+                sendMessage(agents, airportListString.toString());
+
             }
         });
+    }
+
+    private void sendMessage(AMSAgentDescription [] agents, String airportListString){
+        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+        msg.setContent(airportListString);
+
+        for (AMSAgentDescription agent : agents) {
+            if (agent.getName().getLocalName().startsWith("crew_member")) {
+                msg.addReceiver(agent.getName());
+            }
+        }
+
+
+        send(msg);
     }
 }

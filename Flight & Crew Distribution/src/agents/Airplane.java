@@ -10,15 +10,15 @@ import java.lang.reflect.Array;
 import java.util.*;
 
 public class Airplane extends Agent {
-    Random rnd = newRandom();
-    int price  = rnd.nextInt(99) + 1;
+    private Random rnd = newRandom();
+    private int price  = rnd.nextInt(99) + 1;
     //    transactions = 0,
     //    results = 0;
 
-    int available_spots = 1,
+    private int available_spots = 1,
         available_budget = 100;
 
-    HashMap<String, ACLMessage> currentSenders = new HashMap<String, ACLMessage>();
+    private HashMap<String, ACLMessage> currentSenders = new HashMap<String, ACLMessage>();
     HashSet<AID> crew = new HashSet<AID>(); // update with accepted crew members
 
     protected void setup() {
@@ -72,8 +72,8 @@ public class Airplane extends Agent {
                     if(pair.getValue() == null) continue;
 
                     ACLMessage tmp_msg = (ACLMessage)pair.getValue();
-                    if(Integer.valueOf(tmp_msg.getContent()) >= best_offer_value) {
-                        best_offer_value = Integer.valueOf(tmp_msg.getContent());
+                    if(Integer.parseInt(tmp_msg.getContent()) >= best_offer_value) {
+                        best_offer_value = Integer.parseInt(tmp_msg.getContent());
                         best_offer_msg = tmp_msg;
                     }
                 }
@@ -130,7 +130,7 @@ public class Airplane extends Agent {
     }
     */
 
-    Random newRandom() {
+    private Random newRandom() {
         return new Random( hashCode() + System.currentTimeMillis());
     }
     // Garbage Disposal
@@ -152,8 +152,7 @@ public class Airplane extends Agent {
                 msg = myAgent.receive();
             }
 
-            for(Iterator it = seen.iterator(); it.hasNext(); )
-                myAgent.putBack( (ACLMessage) it.next() );
+            for (Object o : seen) myAgent.putBack((ACLMessage) o);
 
             old.clear();
             Set tmp = old;
@@ -163,7 +162,7 @@ public class Airplane extends Agent {
     }
     static long t0 = System.currentTimeMillis();
 
-    void dumpMessage( ACLMessage msg ) {
+    private void dumpMessage(ACLMessage msg) {
         System.out.print( "t=" + (System.currentTimeMillis()-t0)/1000F + " in "
                 + getLocalName() + ": "
                 + ACLMessage.getPerformative(msg.getPerformative() ));
