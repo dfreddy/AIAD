@@ -13,13 +13,14 @@ import java.util.*;
 import static java.lang.Integer.parseInt;
 
 public class CrewMember extends Agent {
-    private Random rnd = newRandom();
-    private int bestPrice = 9999;
-    private ACLMessage bestOffer;
 
-    private String [] airportNameList;
+    private Random rnd = newRandom();
+    private int bestSalaryOffer = 0;
+    private ACLMessage bestOffer;
+    private String [] airportNameList = null;
+
     protected void setup() {
-        bestPrice = 9999;
+        bestSalaryOffer = 0;
         bestOffer = null;
 
         ACLMessage msg = newMsg(ACLMessage.QUERY_REF);
@@ -33,17 +34,22 @@ public class CrewMember extends Agent {
 
         ParallelBehaviour par = new ParallelBehaviour( ParallelBehaviour.WHEN_ALL );
 
+        // CrewMembers should ask BigBrother for the airportNameList beforehand
+        // ACLMessage big_brother_msg = newMsg(ACLMessage.QUERY_REF)
+        // send big_brother_msg and wait for a reply
+        // while( airportNameList == null ) { do nothing; }
+        // for (int i = 0; i < airportNameList.length; i++) {
 
-        for (int i = 0; i < airportNameList.length; i++) {
+        for (int i = 0; i < 3; i++) {   // temporary fix
             // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
-            msg.addReceiver( new AID( airportNameList[i],  AID.ISLOCALNAME ));
+            msg.addReceiver( new AID("s"+i, AID.ISLOCALNAME ));
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
                 public void handle(ACLMessage msg) {
                     if (msg != null) {
                         int offer = Integer.parseInt( msg.getContent());
-                        if (offer < bestPrice) {
-                            bestPrice = offer;
+                        if (offer > bestSalaryOffer) {
+                            bestSalaryOffer = offer;
                             bestOffer = msg;
                         }
                     }
@@ -56,18 +62,20 @@ public class CrewMember extends Agent {
             public void handleElapsedTimeout() {
                 if (bestOffer != null) {
                     ACLMessage reply = bestOffer.createReply();
-                    System.out.println("=="+ getLocalName() + " <- Best Price is $" + bestPrice + " from " + bestOffer.getSender().getLocalName());
-                    // if ( bestPrice <= 30 ) {
+                    System.out.println("=="+ getLocalName() + " <- Best Salary Offer is $" + bestSalaryOffer + " from " + bestOffer.getSender().getLocalName());
 
-                        // RANDOM BASED BARTERING
-                        if (bestPrice > 30) bestPrice = 30;
-                        int offer = rnd.nextInt(bestPrice)+1;
-                        reply.setPerformative( ACLMessage.REQUEST );
-                        reply.setContent( "" + offer );
-                        send(reply);
-                        System.out.println("=="+ getLocalName() + " <- Offering $" + offer + " to " + bestOffer.getSender().getLocalName());
-                    // }
-                    // else setup();
+                    // RANDOM BASED BARTERING
+                    int proposal;
+                    if (bestSalaryOffer < 30) bestSalaryOffer = 30;
+                    if (bestSalaryOffer < 70)
+                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * rnd.nextFloat()*0.5f); // crew member will accept anything above 70. will try to barter if it's below 70
+                    else
+                        proposal = bestSalaryOffer;
+
+                    reply.setPerformative( ACLMessage.REQUEST );
+                    reply.setContent( "" + proposal );
+                    send(reply);
+                    System.out.println("=="+ getLocalName() + " <- Asking for a salary of $" + proposal + " from " + bestOffer.getSender().getLocalName());
                 }
             }
         });
@@ -79,8 +87,7 @@ public class CrewMember extends Agent {
                         , MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
                 ));
 
-
-        seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, null){
+        seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, receiverTemplate){
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
                     if( msg.getPerformative() == ACLMessage.INFORM){
@@ -102,6 +109,21 @@ public class CrewMember extends Agent {
                 }
             }
         });
+
+        /*  Cyclic Behaviour for catching
+        MessageTemplate receiverBigBrotherTemplate = MessageTemplate.and(
+                MessageTemplate.MatchConversationId(big_brother_msg.getConversationId()), MessageTemplate.MatchPerformative(ACLMessage.INFORM)
+                );
+
+        seq.addSubBehaviour(new CyclicBehaviour(){
+                ACLMessage msg = receive(receiverBigBrotherTemplate);
+                if (msg != null ) {
+                    airportNameList = msg.getContent().split(";");
+                    System.out.println(myAgent.getLocalName() + " got airport list: " + msg.getContent());
+                    return;
+                }
+        });
+        */
 
         send(msg);
     }

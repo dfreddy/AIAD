@@ -1,1 +1,1 @@
-http://DESKTOP-D16KU9O.lan:7778/acc
+http://LAPTOP-BRMCO9AJ:7778/acc

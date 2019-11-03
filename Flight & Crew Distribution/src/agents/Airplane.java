@@ -11,38 +11,31 @@ import java.util.*;
 
 public class Airplane extends Agent {
     private Random rnd = newRandom();
-    private int price  = rnd.nextInt(99) + 1;
-    //    transactions = 0,
-    //    results = 0;
-
-    private int available_spots = 1,
-        available_budget = 100;
+    private int available_spots = 2,
+            available_budget = 100*available_spots,
+            salary  = rnd.nextInt(available_budget / available_spots - 30) + 31;
 
     private HashMap<String, ACLMessage> currentSenders = new HashMap<String, ACLMessage>();
     HashSet<AID> crew = new HashSet<AID>(); // update with accepted crew members
+    private int n_offers_last_cycle = 0;
 
     protected void setup() {
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
+
                 // handle received msg only if it's not from a repeating sender
                 if (msg != null && available_spots > 0 && !currentSenders.containsKey(msg.getSender().getLocalName())) {
                     currentSenders.put(msg.getSender().getLocalName(), null);
 
-                    SequentialBehaviour t = new Transaction(myAgent, msg, getPrice()) {
+                    // TODO
+                    // in the future, getSalary() will not provide a random number
+                    // instead, it will depend on the CrewMember's experience, time until flight takeoff, and number of offers it had in the previous cycle
+                    // as such, updateSalary() will not be necessary, as getSalary() will automatically update
+                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalary()) {
                         public int onEnd() {
-                            // int r = getResult();
-                            // transactions++;
-                            // results += r;
-
-                            // if the offer is agreeable, store it for later
-                            // if (r == 0) {
-                                ACLMessage barter_reply = getBarterReply();
-                                currentSenders.replace(msg.getSender().getLocalName(), barter_reply);
-                            // }
-
-                            // System.out.println("Added result " + r + " to " + myAgent.getLocalName());
-                            // System.out.println(myAgent.getLocalName() + " has " + transactions + " transactions");
+                            ACLMessage barter_reply = getBarterReply();
+                            currentSenders.replace(msg.getSender().getLocalName(), barter_reply);
                             return super.onEnd();
                         }
                     };
@@ -57,34 +50,45 @@ public class Airplane extends Agent {
 
         // ticker behaviour closes out all existing transactions
         // decides which proposal to accept
-        // updates price standards if none is acceptable
+        // updates salary standards if none is acceptable
         addBehaviour(new TickerBehaviour(this, 5000) {
             protected void onTick() {
                 if (currentSenders.size() == 0) return;
 
                 // decide what's the best offer to accept
                 ACLMessage best_offer_msg = null;
-                int best_offer_value = price/2; // for now, assume the minimum accepted value is half the price
+                int best_offer_value = getMaxSalaryBudget();
 
                 Iterator it = currentSenders.entrySet().iterator();
-                while(it.hasNext()) {
-                    HashMap.Entry pair = (HashMap.Entry)it.next();
-                    if(pair.getValue() == null) continue;
+                while (it.hasNext()) {
+                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                    if (pair.getValue() == null) continue;
 
-                    ACLMessage tmp_msg = (ACLMessage)pair.getValue();
-                    if(Integer.parseInt(tmp_msg.getContent()) >= best_offer_value) {
+                    ACLMessage tmp_msg = (ACLMessage) pair.getValue();
+                    if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) {
                         best_offer_value = Integer.parseInt(tmp_msg.getContent());
                         best_offer_msg = tmp_msg;
                     }
                 }
 
+                // randomly check if best salary offer is not too high
+                boolean bool_accepted_offer = false;
+                int measure = rnd.nextInt(getMaxSalaryBudget() - getSalary()) + getSalary() + 1; // will accept anything below the proposed salary
+
+                System.out.println(getLocalName() + " <- will accept anything under $" + measure);
+                if (best_offer_value <= available_budget &&
+                    best_offer_value <= measure)
+                    bool_accepted_offer = true;
+
                 // updates the performative for the best offer
-                if(best_offer_msg != null) {
+                if(best_offer_msg != null && bool_accepted_offer) {
+                    available_budget = available_budget - best_offer_value;
                     available_spots--;
                     best_offer_msg.setPerformative(ACLMessage.AGREE);
                 }
-                // if there's no best offer, update prices
-                else updatePrice();
+                // if there's no best offer, update salary standards
+                else if (!bool_accepted_offer)
+                    updateSalaryBudget();
 
                 // sends the replies to every crew member
                 it = currentSenders.entrySet().iterator();
@@ -95,27 +99,46 @@ public class Airplane extends Agent {
                     ACLMessage barter_reply = (ACLMessage)pair.getValue();
                     send(barter_reply);
                 }
+
+                n_offers_last_cycle = currentSenders.size();
                 currentSenders.clear();
 
-                // System.out.println(myAgent.getLocalName() + "\nnr transactions: " + transactions + "\nResults: " + results);
-                // update price standards if all transactions failed
-                // if(results == transactions) updatePrice();
+                if(available_spots == 0)
+                    System.out.println("\n" + getLocalName() + " <- is ready to fly with $" + available_budget + " remaining");
 
-                // reset all transaction related variables
-                // results = 0;
-                // transactions = 0;
             }
         });
     }
 
-    private void updatePrice() {
-        int p = (int)(this.price * 0.6);
-        this.price = p;
-        System.out.println(getLocalName() + " <- updating prices");
+    private void updateSalaryBudget() {
+        float multiplier = rnd.nextFloat()*0.3f;
+        int p;
+        if (available_spots > 1)
+            p = this.salary + (int)(this.salary * multiplier);
+        else
+            p = this.salary - (int)(this.salary * multiplier);
+
+        if (p > (getMaxSalaryBudget())) {
+            this.salary = getMaxSalaryBudget();
+            System.out.println(getLocalName() + " <- is at max offer: $" + this.salary);
+        }
+        else {
+            this.salary = p;
+            System.out.println(getLocalName() + " <- updating offer: $" + this.salary + " --- available budget: $" + this.available_budget);
+        }
     }
 
-    private int getPrice() {
-        return this.price;
+    private int getSalary() {
+        return this.salary;
+    }
+
+    // the max budget for a single crew member cannot exceed the avg salary for a crew member by 50%
+    private int getMaxSalaryBudget() {
+        int b = (int)(this.salary * 1.5);
+        if (b > available_budget)
+            b = available_budget;
+
+        return b;
     }
 
     /*
