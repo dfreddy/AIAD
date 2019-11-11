@@ -19,6 +19,8 @@ public class CrewMember extends Agent {
     private ACLMessage bestOffer;
     private String [] airportNameList = null;
 
+    private int min_acceptable_offer = 30, max_acceptable_offer = 70;
+
     protected void setup() {
         bestSalaryOffer = 0;
         bestOffer = null;
@@ -66,12 +68,13 @@ public class CrewMember extends Agent {
 
                     // RANDOM BASED BARTERING
                     int proposal;
-                    if (bestSalaryOffer < 30) bestSalaryOffer = 30;
-                    if (bestSalaryOffer < 70)
+                    if (bestSalaryOffer < min_acceptable_offer) bestSalaryOffer = min_acceptable_offer;
+                    if (bestSalaryOffer < max_acceptable_offer)
                         proposal =  bestSalaryOffer + (int)(bestSalaryOffer * rnd.nextFloat()*0.5f); // crew member will accept anything above 70. will try to barter if it's below 70
                     else
                         proposal = bestSalaryOffer;
 
+                    // TODO: add also the worker's resume (rank) to the reply's content
                     reply.setPerformative( ACLMessage.REQUEST );
                     reply.setContent( "" + proposal );
                     send(reply);

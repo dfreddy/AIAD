@@ -53,19 +53,21 @@ public class Airplane extends Agent {
         // updates salary standards if none is acceptable
         addBehaviour(new TickerBehaviour(this, 5000) {
             protected void onTick() {
+                // do nothing if there's no finished transactions
                 if (currentSenders.size() == 0) return;
 
                 // decide what's the best offer to accept
+                // TODO: consider every offer, starting wit the best ones, in a loop where the available_budget/spots is updated accordingly
                 ACLMessage best_offer_msg = null;
                 int best_offer_value = getMaxSalaryBudget();
-
                 Iterator it = currentSenders.entrySet().iterator();
+
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
                     if (pair.getValue() == null) continue;
 
                     ACLMessage tmp_msg = (ACLMessage) pair.getValue();
-                    if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) {
+                    if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) { // TODO: tmp_msg.getContent() will return the worker's resume as well. Parse the msg accordingly.
                         best_offer_value = Integer.parseInt(tmp_msg.getContent());
                         best_offer_msg = tmp_msg;
                     }
@@ -73,8 +75,7 @@ public class Airplane extends Agent {
 
                 // randomly check if best salary offer is not too high
                 boolean bool_accepted_offer = false;
-                int measure = rnd.nextInt(getMaxSalaryBudget() - getSalary()) + getSalary() + 1; // will accept anything below the proposed salary
-
+                int measure = rnd.nextInt(getMaxSalaryBudget() - getSalary()) + getSalary(); // will accept anything below the proposed salary
                 System.out.println(getLocalName() + " <- will accept anything under $" + measure);
                 if (best_offer_value <= available_budget &&
                     best_offer_value <= measure)
@@ -87,6 +88,7 @@ public class Airplane extends Agent {
                     best_offer_msg.setPerformative(ACLMessage.AGREE);
                 }
                 // if there's no best offer, update salary standards
+                // TODO: updateSalaryBudget() becomes reduntant when each individual offer starts depending on preferences, instead of a random on existing budget.
                 else if (!bool_accepted_offer)
                     updateSalaryBudget();
 

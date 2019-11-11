@@ -45,7 +45,8 @@ public class Transaction extends SequentialBehaviour {
                 if (msg1 != null ) {
                     int offer = Integer.parseInt(msg1.getContent());
 
-                    // RANDOM BASED BARTERING
+                    // sets the default reply to REFUSE
+                    // in the Airplane classe it will be decided if it's accepted
                     barter_reply = msg1.createReply();
                     barter_reply.setPerformative(ACLMessage.REFUSE);
                     barter_reply.setContent("" + offer);
