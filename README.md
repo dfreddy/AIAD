@@ -11,10 +11,10 @@
 - Crew Member: - Necessidade/Interesse em baixar preço - Airplanes: - Urgência para recrutar - Recursos monetarios disponiveis 
  
 ### Utility Function (Crew Member) 
-Define felicidade do agente com o seu estado final. Vai depender do tempo de espera e preço conseguido para a ultima viagem. 
-Utility Function (Airplane) 
-Define felicidade com do agente airplane com o voo a efetuar. Vai depender da experiencia da tripulação e recursos monetarios de sobra, em relação à ultima viagem efetuada. 
+Define felicidade do agente com o seu estado final. Vai depender do tempo de espera e preço conseguido para a viagem, tal como a sua preferencia pela duraçao da viagem que irá efetuar.
 
+### Utility Function (Airplane) 
+Define felicidade do agente airplane com o voo a efetuar. Vai depender da experiencia da tripulação e recursos monetarios de sobra.
  
 ### Environment 
 Neste sistema multi agentes, os agentes Airplanes têm viagens a efetuar. Um dado tempo antes da viagem ser efetuada, este agente requisita ao mercado membros individuais para a tripulação. Os agentes Crew Member, membros de tripulação individuais com cargos especificos, irão respondendo às propostas existentes, de modo a encontrar o voo que se adequa mais aos seus desejos. Os agentes Airplanes têem a possibilidade de não aceitar imediatamente um crew member, se acreditarem que este não tem experiencia suficiente. Há medida que o tempo vai passando, e que vão surgindo propostas diferentes, as exigencias de ambos agentes vão sendo sugeitas a alterações. Havendo, portanto, um ambiente constante de negociação neste sistema. As negociações entre agentes serão descentralisadas, de tal modo não haverá a existencia de intermediários. 
