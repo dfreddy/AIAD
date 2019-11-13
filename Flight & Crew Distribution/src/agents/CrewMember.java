@@ -45,6 +45,7 @@ public class CrewMember extends Agent {
         for (int i = 0; i < 3; i++) {   // temporary fix
             // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
             msg.addReceiver( new AID("s"+i, AID.ISLOCALNAME ));
+            // msg.setContent("" + CV);
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
                 public void handle(ACLMessage msg) {
