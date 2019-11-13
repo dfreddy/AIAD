@@ -15,7 +15,7 @@ public class BigBrotherAgent extends Agent
 {
     protected void setup()
     {
-        addBehaviour(new TickerBehaviour(this, 2000) {
+        addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
                 AMSAgentDescription [] agents = null;
                 try {
@@ -27,6 +27,7 @@ public class BigBrotherAgent extends Agent
                     System.out.println( "Problem searching AMS: " + e );
                     e.printStackTrace();
                 }
+
 
                 StringBuilder airportListString = new StringBuilder();
                 for(AMSAgentDescription mAgent : agents){
@@ -46,10 +47,12 @@ public class BigBrotherAgent extends Agent
 
         for (AMSAgentDescription agent : agents) {
             if (agent.getName().getLocalName().startsWith("crew_member")) {
+
                 msg.addReceiver(agent.getName());
             }
         }
 
+        //System.out.println( "Big Brother: sending airplane list"   );
 
         send(msg);
     }
