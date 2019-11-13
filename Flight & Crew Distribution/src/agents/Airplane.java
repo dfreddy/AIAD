@@ -15,11 +15,31 @@ public class Airplane extends Agent {
     int price  = rnd.nextInt(100),
             transactions = 0,
             results = 0;
+    int flightTime;
+
+    //requirements
+    int requiredExperienceForPilots;
+    int requiredExperienceForAttendants;
+    int requiredExperienceForCabinChief;
+
+    //max value of investment for a recruitment
+    int maxInvestment;
+    int minInvestment;
+
+    //Required crew (podera ser necessário)
+    int nrOfRequiredPilots;
+    int nrOfRequiredAttendants;
+    int nrOfRequiredCabinChief;
 
     // int available_spots;
     // int available_money;
 
     protected void setup() {
+        //generates the necessary crew for the flight
+        generateNecessaryCrew();
+        attributeExperience();
+
+
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
@@ -56,6 +76,20 @@ public class Airplane extends Agent {
                 transactions = 0;
             }
         });
+    }
+
+    private void attributeExperience(){
+        requiredExperienceForAttendants = 300;
+        requiredExperienceForCabinChief = 400;
+        requiredExperienceForPilots = 500;
+    }
+
+    private void generateNecessaryCrew(){
+        Random rnd = newRandom();
+
+        nrOfRequiredAttendants = rnd.nextInt(9) + 1;
+        nrOfRequiredCabinChief = rnd.nextInt(2) + 1;
+        nrOfRequiredPilots = rnd.nextInt(3) + 1;
     }
 
     private void updatePrice() {
