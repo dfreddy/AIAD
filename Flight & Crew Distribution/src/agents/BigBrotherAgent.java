@@ -35,6 +35,7 @@ public class BigBrotherAgent extends Agent
                         airportListString.append(mAgent.getName().getLocalName()).append(";");
                     }
                 }
+                System.out.println( airportListString );
                 sendMessage(agents, airportListString.toString());
 
             }

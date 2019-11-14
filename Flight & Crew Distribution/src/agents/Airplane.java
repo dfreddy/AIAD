@@ -11,7 +11,7 @@ import java.util.*;
 
 public class Airplane extends Agent {
     private Random rnd = newRandom();
-    private int available_spots = 2,
+    private int available_spots = 1,
             available_budget = 100*available_spots,
             salary  = rnd.nextInt(available_budget / available_spots - 30) + 31;
 
@@ -75,7 +75,7 @@ public class Airplane extends Agent {
 
                 // randomly check if best salary offer is not too high
                 boolean bool_accepted_offer = false;
-                int measure = rnd.nextInt(getMaxSalaryBudget() - getSalary()) + getSalary(); // will accept anything below the proposed salary
+                int measure = rnd.nextInt(getMaxSalaryBudget() - getSalary()+1)-1 + getSalary(); // will accept anything below the proposed salary
                 System.out.println(getLocalName() + " <- will accept anything under $" + measure);
                 if (best_offer_value <= available_budget &&
                     best_offer_value <= measure)
@@ -105,9 +105,10 @@ public class Airplane extends Agent {
                 n_offers_last_cycle = currentSenders.size();
                 currentSenders.clear();
 
-                if(available_spots == 0)
+                if(available_spots == 0) {
                     System.out.println("\n" + getLocalName() + " <- is ready to fly with $" + available_budget + " remaining");
-
+                    doDelete();
+                }
             }
         });
     }

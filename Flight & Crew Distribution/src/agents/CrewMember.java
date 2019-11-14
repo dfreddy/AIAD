@@ -54,13 +54,14 @@ public class CrewMember extends Agent {
       public void handle(ACLMessage msg) {
         if (msg != null ) {
           String [] newAirplaneName = msg.getContent().split(";");
-            //System.out.println("new Airplane: ");
 
           ArrayList<String> newAirplaneList = new ArrayList<>();
           ArrayList<String> removedAirplaneList = new ArrayList<>();
 
           for (String s : newAirplaneName) {
-            if (!airplaneNameList.contains(s)) {
+              //System.out.println("Airplane: " + s);
+
+              if (!airplaneNameList.contains(s)) {
               airplaneNameList.add(s);
               newAirplaneList.add(s);
             }
@@ -154,13 +155,13 @@ public class CrewMember extends Agent {
             System.out.println("\n==" + getLocalName() + " <- GOT ACCEPTED by " + msg.getSender().getLocalName());
           else {
             System.out.println("\n==" + getLocalName() + " <- GOT REJECTED by " + msg.getSender().getLocalName());
-            setup();
+              setup();
           }
         }
         else {
           System.out.println("==" + getLocalName()
                   +" timed out... setting up again");
-          //setup();
+          setup();
         }
       }
     });
