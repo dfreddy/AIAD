@@ -15,7 +15,14 @@ public class Airplane extends Agent {
     int price  = rnd.nextInt(100),
             transactions = 0,
             results = 0;
-    int flightTime;
+
+    //Flight Specifications
+    double totalFlightTime;
+    double flightsTime;
+    double connectionTime;
+
+    //Might be LONG, MEDIUM, SHORT
+    String flightType;
 
     //requirements
     int requiredExperienceForPilots;
@@ -23,8 +30,9 @@ public class Airplane extends Agent {
     int requiredExperienceForCabinChief;
 
     //max value of investment for a recruitment
-    int maxInvestment;
-    int minInvestment;
+    double maxAttendantInvestment;
+    double maxChiefInvestment;
+    double maxPilotInvestment;
 
     //Required crew (podera ser necessário)
     int nrOfRequiredPilots;
@@ -34,10 +42,65 @@ public class Airplane extends Agent {
     // int available_spots;
     // int available_money;
 
+    public void generateFlightSpecification(){
+
+        //used to limit the number or hours in a flight being generated (numberOfConnections * timesOfConnection + FlightTime)
+        int minFlightTime = 1;
+        int maxFlightTime = 16;
+        int minConnectionTime = 1;
+        int maxConnectionTime = 2;
+        int maxNumberOfConnections = 2;
+
+
+        //generates the connectionsTime
+        Random rnd = newRandom();
+        int nrOfConnections = rnd.nextInt(maxNumberOfConnections);
+        connectionTime = 0;
+        for (int i=0; i < nrOfConnections; i++){
+            connectionTime = connectionTime + rnd.nextInt((maxConnectionTime - minConnectionTime) + 1) + minConnectionTime + rnd.nextDouble();
+        }
+
+
+        //generates the flightsTime and totalFlightTime
+        flightsTime = rnd.nextInt((int) ((maxFlightTime - connectionTime) - minFlightTime) + 1) + minFlightTime + rnd.nextDouble();
+        totalFlightTime = flightsTime + connectionTime;
+    }
+
+    public void attributeFlightType(){
+        //attributes flightType
+        if(totalFlightTime <= 4){ //short term flight
+            flightType = "SHORT";
+            generateNecessaryCrew(2, 4, 1, 2, 2, 2);
+        }
+        else if( totalFlightTime > 4 && totalFlightTime <= 8){ //mid term flight
+            flightType = "MEDIUM";
+            generateNecessaryCrew(3, 6, 2, 3, 2, 2);
+        }
+        else{ // long term flight
+            flightType = "LONG";
+            generateNecessaryCrew(6, 10, 4, 6, 3, 4);
+        }
+    }
+
+    private void generateRequiredExperience(int attendantExp, int chiefExp, int pilotExp){
+        requiredExperienceForAttendants = attendantExp;
+        requiredExperienceForCabinChief = chiefExp;
+        requiredExperienceForPilots = pilotExp;
+    }
+
+    //IMPORTANT: min can NEVER be 0
+    private void generateNecessaryCrew(int minAttendant, int maxAttendant, int minCabinChief, int maxCabinChief, int minPilot, int maxPilot){
+        Random rnd = newRandom();
+
+        nrOfRequiredAttendants = rnd.nextInt(maxAttendant - minAttendant) - minAttendant;
+        nrOfRequiredCabinChief = rnd.nextInt(maxCabinChief - minCabinChief) - minCabinChief;
+        nrOfRequiredPilots = rnd.nextInt(maxPilot - minPilot) + minPilot;
+    }
+
     protected void setup() {
-        //generates the necessary crew for the flight
-        generateNecessaryCrew();
-        attributeExperience();
+        generateFlightSpecification();
+        attributeFlightType();
+
 
 
         addBehaviour(new CyclicBehaviour(this) {
@@ -78,19 +141,7 @@ public class Airplane extends Agent {
         });
     }
 
-    private void attributeExperience(){
-        requiredExperienceForAttendants = 300;
-        requiredExperienceForCabinChief = 400;
-        requiredExperienceForPilots = 500;
-    }
 
-    private void generateNecessaryCrew(){
-        Random rnd = newRandom();
-
-        nrOfRequiredAttendants = rnd.nextInt(9) + 1;
-        nrOfRequiredCabinChief = rnd.nextInt(2) + 1;
-        nrOfRequiredPilots = rnd.nextInt(3) + 1;
-    }
 
     private void updatePrice() {
         int p = (int)(this.price * 0.7);

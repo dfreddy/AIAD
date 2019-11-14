@@ -18,7 +18,43 @@ public class Airport {
     public static final String DEFAULT_FILENAME = "leap.properties";
     private static Logger logger = Logger.getMyLogger("jade.Boot");
 
+    public static void teste(){
+        int s = 0, m=0, l=0;
+
+        for (int i = 0; i < 1000; i++){
+            Airplane a1 = new Airplane();
+            a1.generateFlightSpecification();
+            a1.attributeFlightType();
+
+
+            System.out.println("Ite: " + i);
+            System.out.println("FlightTime: " + a1.flightsTime);
+            System.out.println("ConnectionTime: " + a1.connectionTime);
+            System.out.println("TotalFlightTime: " + a1.totalFlightTime);
+            System.out.println("FlightType: " + a1.flightType);
+
+            if(a1.flightType == "SHORT"){ //short term flight
+                s++;
+            }
+            else if(a1.flightType == "MEDIUM"){ //mid term flight
+                m++;
+            }
+            else{ // long term flight
+                l++;
+            }
+
+
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println("Nr of ShortFlights: " + s);
+        System.out.println("Nr of MediumFlights: " + m);
+        System.out.println("Nr of LongFlights: " + l);
+    }
+
     public static void main(String[] args) {
+        //teste();
         try {
             ProfileImpl p = null;
             if (args.length > 0) {
