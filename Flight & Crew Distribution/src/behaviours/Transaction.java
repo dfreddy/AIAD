@@ -13,6 +13,8 @@ public class Transaction extends SequentialBehaviour {
     String ConvID;
     int price;
     int result;
+    int final_offer;
+    float rank;
 
     public Transaction(Agent a, ACLMessage msg, int price) {
         super(a);
@@ -43,13 +45,15 @@ public class Transaction extends SequentialBehaviour {
         addSubBehaviour(new ReceiverBehaviour(myAgent, 2000, template) {
             public void handle( ACLMessage msg1) {
                 if (msg1 != null ) {
-                    int offer = Integer.parseInt(msg1.getContent());
+                    String[] content = (msg1.getContent().split(","));
+                    int final_offer = Integer.parseInt(content[0]);
+                    float rank = Float.parseFloat(content[1]);
 
                     // sets the default reply to REFUSE
                     // in the Airplane classe it will be decided if it's accepted
                     barter_reply = msg1.createReply();
                     barter_reply.setPerformative(ACLMessage.REFUSE);
-                    barter_reply.setContent("" + offer);
+                    barter_reply.setContent("" + final_offer);
                     return;
                     /*
                     if (offer >= rnd.nextInt(price/2)) {
@@ -73,9 +77,8 @@ public class Transaction extends SequentialBehaviour {
         });
     }
 
-    public int getResult() {
-        return result;
-    }
+    public int getFinalOffer() { return final_offer; }
+    public float getRank() { return rank; }
 
     public ACLMessage getBarterReply() { return barter_reply; }
 

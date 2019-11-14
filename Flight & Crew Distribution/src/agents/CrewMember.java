@@ -19,7 +19,8 @@ public class CrewMember extends Agent {
     private ACLMessage bestOffer;
     private String [] airportNameList = null;
 
-    private int min_acceptable_offer = 30, max_acceptable_offer = 70;
+    private float rank = rnd.nextFloat(); // temporary for testing
+    private int min_acceptable_offer = 30, max_acceptable_offer = (int) (min_acceptable_offer * 3 * rank);
 
     protected void setup() {
         bestSalaryOffer = 0;
@@ -45,7 +46,7 @@ public class CrewMember extends Agent {
         for (int i = 0; i < 3; i++) {   // temporary fix
             // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
             msg.addReceiver( new AID("s"+i, AID.ISLOCALNAME ));
-            // msg.setContent("" + CV);
+            msg.setContent("" + rank);
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
                 public void handle(ACLMessage msg) {
@@ -71,15 +72,18 @@ public class CrewMember extends Agent {
                     int proposal;
                     if (bestSalaryOffer < min_acceptable_offer) bestSalaryOffer = min_acceptable_offer;
                     if (bestSalaryOffer < max_acceptable_offer)
-                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * rnd.nextFloat()*0.5f); // crew member will accept anything above 70. will try to barter if it's below 70
+                        // crew member will accept anything above x, depending on its rank
+                        // TODO: this multiplier will depend on
+                        //  the total time waiting and willingness to wait
+                        //  preference for flight length
+                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * rnd.nextFloat()*0.5f);
                     else
                         proposal = bestSalaryOffer;
 
-                    // TODO: add also the worker's resume (rank) to the reply's content
                     reply.setPerformative( ACLMessage.REQUEST );
-                    reply.setContent( "" + proposal );
+                    reply.setContent( proposal + "," + rank );
                     send(reply);
-                    System.out.println("=="+ getLocalName() + " <- Asking for a salary of $" + proposal + " from " + bestOffer.getSender().getLocalName());
+                    System.out.println("=="+ getLocalName() + " <- Asking for $" + proposal + " from " + bestOffer.getSender().getLocalName() + " with a rank of " + (int) (rank*100));
                 }
             }
         });

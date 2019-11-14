@@ -11,16 +11,16 @@ import java.util.*;
 
 public class Airplane extends Agent {
     private Random rnd = newRandom();
-    private int predicted_salary = 100,
+    private int min_salary = 30, max_salary = 100,
             available_spots = 2,
-            available_budget = predicted_salary * available_spots,
-            salary  = rnd.nextInt(available_budget / available_spots - 30) + 31,
-            initial_salary = salary,
+            available_budget = max_salary * available_spots,
+            salary = rnd.nextInt(max_salary - 30) + 31, // TODO: remove
+            initial_salary = salary, // TODO: remove
             initial_time_to_takeoff = 15000 + 5000 * (rnd.nextInt(5)), // initial time until takeoff varies between 15s and 40s
             time_to_takeoff = initial_time_to_takeoff;
 
-    private HashMap<String, ACLMessage> currentSenders = new HashMap<String, ACLMessage>();
-    HashSet<AID> crew = new HashSet<AID>(); // update with accepted crew members
+    private Map<Float, ACLMessage> currentTransactions = new TreeMap<Float, ACLMessage>(Collections.reverseOrder()); // <rank, reply>
+    HashSet<AID> crew = new HashSet<AID>(); // updates with accepted crew members
     private int n_offers_last_cycle = 0;
 
     protected void setup() {
@@ -31,17 +31,15 @@ public class Airplane extends Agent {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
 
                 // handle received msg only if it's not from a repeating sender
-                if (msg != null && available_spots > 0 && !currentSenders.containsKey(msg.getSender().getLocalName())) {
-                    currentSenders.put(msg.getSender().getLocalName(), null);
+                if (msg != null && available_spots > 0 && !currentTransactions.containsKey(msg.getSender().getLocalName())) {
+                    float cm_rank = Float.parseFloat(msg.getContent());
 
-                    // TODO
-                    // in the future, getSalary() will not provide a random number
-                    // instead, it will depend on the CrewMember's experience, time until flight takeoff, and number of offers it had in the previous cycle
-                    // as such, updateSalary() will not be necessary, as getSalary() will automatically update
-                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalary()) {
+                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalaryForCrewMember(cm_rank)) {
                         public int onEnd() {
                             ACLMessage barter_reply = getBarterReply();
-                            currentSenders.replace(msg.getSender().getLocalName(), barter_reply);
+                            float r = getRank();
+                            currentTransactions.put(r, barter_reply);
+
                             return super.onEnd();
                         }
                     };
@@ -56,24 +54,27 @@ public class Airplane extends Agent {
 
         // ticker behaviour closes out all existing transactions
         // decides which proposal to accept
-        // updates salary standards if none is acceptable
         addBehaviour(new TickerBehaviour(this, 5000) {
             protected void onTick() {
                 // do nothing if there's no finished transactions
-                if (currentSenders.size() == 0) return;
+                if (currentTransactions.size() == 0) return;
 
                 // decide what's the best offer to accept
-                // TODO: consider every offer, starting wit the best ones, in a loop where the available_budget/spots is updated accordingly
+                // considers every offer, starting wit the CrewMembers wit higher rank, in a loop where the available_budget/spots is updated accordingly
                 ACLMessage best_offer_msg = null;
                 int best_offer_value = getMaxSalaryBudget();
-                Iterator it = currentSenders.entrySet().iterator();
+                Iterator it = currentTransactions.entrySet().iterator();
 
+                // TODO:
+                //  rate proposal n decide if it's worth it
+                //  take into consideration available_budget and spots
+                //  update performative for the reply if necessary
                 while (it.hasNext()) {
-                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                    Map.Entry pair = (Map.Entry) it.next();
                     if (pair.getValue() == null) continue;
-
+                    
                     ACLMessage tmp_msg = (ACLMessage) pair.getValue();
-                    if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) { // TODO: tmp_msg.getContent() will return the worker's resume as well. Parse the msg accordingly.
+                    if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) {
                         best_offer_value = Integer.parseInt(tmp_msg.getContent());
                         best_offer_msg = tmp_msg;
                     }
@@ -95,11 +96,9 @@ public class Airplane extends Agent {
                     best_offer_msg.setPerformative(ACLMessage.AGREE);
                 }
 
-                // TODO: updateSalaryBudget() becomes reduntant when each individual offer starts depending on preferences, instead of a random on existing budget.
-                updateSalaryBudget();
 
                 // sends the replies to every crew member
-                it = currentSenders.entrySet().iterator();
+                it = currentTransactions.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
                     if (pair.getValue() == null) continue;
@@ -108,8 +107,8 @@ public class Airplane extends Agent {
                     send(barter_reply);
                 }
 
-                n_offers_last_cycle = currentSenders.size();
-                currentSenders.clear();
+                n_offers_last_cycle = currentTransactions.size();
+                currentTransactions.clear();
 
 
 
@@ -125,6 +124,19 @@ public class Airplane extends Agent {
             }
         });
     }
+
+    // depending on time_to_takeoff and CM rank
+    private int getSalaryForCrewMember(float rank) {
+        int sal;
+        float percent_time_to_takeoff = time_to_takeoff/initial_time_to_takeoff;
+        // min sal = 30
+
+        // time left until takeoff has more influence on salary variation
+        sal = (int) (min_salary + (((max_salary-min_salary)*0.4) * rank) + (((max_salary-min_salary)*0.6) * percent_time_to_takeoff));
+
+        return sal;
+    }
+
 
     private void updateSalaryBudget() {
         float percent_time_to_takeoff = time_to_takeoff/initial_time_to_takeoff;
@@ -149,7 +161,7 @@ public class Airplane extends Agent {
 
     // the max budget for a single crew member cannot exceed the predicted salary for a crew member by 50%
     private int getMaxSalaryBudget() {
-        int b = (int)(this.predicted_salary * 1.5);
+        int b = (int)(this.max_salary * 1.5);
         if (b > available_budget)
             b = available_budget;
 
