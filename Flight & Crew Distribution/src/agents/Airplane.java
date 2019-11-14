@@ -11,7 +11,7 @@ import java.util.*;
 
 public class Airplane extends Agent {
     private Random rnd = newRandom();
-    private int min_salary = 30, max_salary = 100,
+    private int min_salary = 30, max_salary = 100, // TODO: make min_salary variable --- make max_salary vary wit the min_salary
             available_spots = 2,
             available_budget = max_salary * available_spots,
             salary = rnd.nextInt(max_salary - 30) + 31, // TODO: remove
@@ -66,7 +66,7 @@ public class Airplane extends Agent {
                 Iterator it = currentTransactions.entrySet().iterator();
 
                 // TODO:
-                //  rate proposal n decide if it's worth it
+                //  rate proposal! n decide if it's worth it
                 //  take into consideration available_budget and spots
                 //  update performative for the reply if necessary
                 while (it.hasNext()) {

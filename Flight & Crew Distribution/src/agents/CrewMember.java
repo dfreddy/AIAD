@@ -16,11 +16,19 @@ public class CrewMember extends Agent {
 
     private Random rnd = newRandom();
     private int bestSalaryOffer = 0;
+    private float bestOfferRating = 0;
     private ACLMessage bestOffer;
     private String [] airportNameList = null;
 
     private float rank = rnd.nextFloat(); // temporary for testing
     private int min_acceptable_offer = 30, max_acceptable_offer = (int) (min_acceptable_offer * 3 * rank);
+
+    private float waiting_multiplier = rnd.nextFloat() * 1.5f + 0.5f; // formula: rnd(0..1) * range + min_value --- this case: 0.5 ~ 2
+    private int waiting_time = 0, max_waiting_time = (int) (30000 * waiting_multiplier); // this case: max_waiting_time = 15s ~ 60s
+    private float waiting_function = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5); // from 0 ~ 0.5, decreases as waiting_time increases
+
+    private int flight_length_preference = rnd.nextInt(12) + 1;
+    private float flight_length_tolerance = rnd.nextFloat() * 3 + 3; // 3 ~ 6 tolerable flight length difference
 
     protected void setup() {
         bestSalaryOffer = 0;
@@ -37,13 +45,18 @@ public class CrewMember extends Agent {
 
         ParallelBehaviour par = new ParallelBehaviour( ParallelBehaviour.WHEN_ALL );
 
+        addBehaviour(new TickerBehaviour(this, 1000) {
+            protected void onTick() {
+                waiting_time = waiting_time + 1000;
+            }
+        });
+
         // CrewMembers should ask BigBrother for the airportNameList beforehand
         // ACLMessage big_brother_msg = newMsg(ACLMessage.QUERY_REF)
         // send big_brother_msg and wait for a reply
         // while( airportNameList == null ) { do nothing; }
         // for (int i = 0; i < airportNameList.length; i++) {
-
-        for (int i = 0; i < 3; i++) {   // temporary fix
+        for (int i = 0; i < 3; i++) { // temporary fix
             // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
             msg.addReceiver( new AID("s"+i, AID.ISLOCALNAME ));
             msg.setContent("" + rank);
@@ -51,8 +64,16 @@ public class CrewMember extends Agent {
             par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
                 public void handle(ACLMessage msg) {
                     if (msg != null) {
-                        int offer = Integer.parseInt( msg.getContent());
-                        if (offer > bestSalaryOffer) {
+                        String[] content = (msg.getContent().split(","));
+                        int offer = Integer.parseInt(content[0]);
+                        int flight_length = Integer.parseInt(content[1]);
+
+                        // use the flight_length to rate the salary offer
+                        float fl_multiplier = getFlightLengthPreferenceMultiplier(flight_length);
+                        float offer_rating = offer * fl_multiplier;
+
+                        if (offer_rating > bestOfferRating) {
+                            bestOfferRating = offer_rating;
                             bestSalaryOffer = offer;
                             bestOffer = msg;
                         }
@@ -73,10 +94,8 @@ public class CrewMember extends Agent {
                     if (bestSalaryOffer < min_acceptable_offer) bestSalaryOffer = min_acceptable_offer;
                     if (bestSalaryOffer < max_acceptable_offer)
                         // crew member will accept anything above x, depending on its rank
-                        // TODO: this multiplier will depend on
-                        //  the total time waiting and willingness to wait
-                        //  preference for flight length
-                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * rnd.nextFloat()*0.5f);
+                        // will propose a higher offer, depending on how comfortable it is to wait more
+                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * waiting_function);
                     else
                         proposal = bestSalaryOffer;
 
@@ -137,6 +156,14 @@ public class CrewMember extends Agent {
     }
 
     // ========== Utility methods =========================
+    private float getFlightLengthPreferenceMultiplier(int flight_length) {
+        int diff = Math.abs(flight_length_preference - flight_length);
+
+        if (diff == 0) return 2f;
+
+        return (float) (1 / Math.pow(diff/flight_length_tolerance, 1/3)); // multiplier ranges from 1 ~ 1.8 with these flight tolerance numbers
+    }
+
     //  --- generating Conversation IDs -------------------
     private static int cidCnt = 0;
     private String cidBase ;
