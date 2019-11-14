@@ -54,6 +54,7 @@ public class CrewMember extends Agent {
       public void handle(ACLMessage msg) {
         if (msg != null ) {
           String [] newAirplaneName = msg.getContent().split(";");
+            //System.out.println("new Airplane: ");
 
           ArrayList<String> newAirplaneList = new ArrayList<>();
           ArrayList<String> removedAirplaneList = new ArrayList<>();
@@ -83,14 +84,15 @@ public class CrewMember extends Agent {
 
     for (String s : newAirplaneList) {
       newAirplane = true;
+      //System.out.println("new Airplane: " + s);
 
       // TODO send it to every existing Airplane Agent, instead of a static list of Airplane Agents
       msg.addReceiver( new AID( s,  AID.ISLOCALNAME ));
-      ReceiverBehaviour airplaneReceiverBehaviour = new ReceiverBehaviour(CrewMember.this, 2000, template) {
+      ReceiverBehaviour airplaneReceiverBehaviour = new ReceiverBehaviour(CrewMember.this, 1000, template) {
         public void handle(ACLMessage msg) {
           if (msg != null) {
             int offer = Integer.parseInt(msg.getContent());
-            System.out.println(getLocalName() + " received new offer: " + msg.getSender().getLocalName() + " | " + offer);
+            //System.out.println(getLocalName() + " received new offer: " + msg.getSender().getLocalName() + " | " + offer);
             if (offer < bestPrice) {
               bestPrice = offer;
               bestOffer = msg;
@@ -115,7 +117,7 @@ public class CrewMember extends Agent {
   }
   private void addResponseBehaviour(){
     seq.removeSubBehaviour(delay);
-    delay = new DelayBehaviour(this, rnd.nextInt(3000)) {
+    delay = new DelayBehaviour(this, rnd.nextInt(1000)) {
       public void handleElapsedTimeout() {
         if (bestOffer != null) {
           ACLMessage reply = bestOffer.createReply();
@@ -158,7 +160,7 @@ public class CrewMember extends Agent {
         else {
           System.out.println("==" + getLocalName()
                   +" timed out... setting up again");
-          setup();
+          //setup();
         }
       }
     });
