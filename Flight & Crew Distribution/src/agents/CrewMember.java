@@ -42,8 +42,8 @@ public class CrewMember extends Agent {
 
         flightTime = rnd.nextInt(1000);
         monthWorkingInAirline = rnd.nextInt(480);
-        int flightTimeScore = (int) Math.ceil((flightTime*1000)/100);
-        int monthWorkingInAirlineScore = (int) Math.ceil((monthWorkingInAirline*480)/100);
+        int flightTimeScore = (int) Math.ceil((flightTime*100)/1000);
+        int monthWorkingInAirlineScore = (int) Math.ceil((monthWorkingInAirline*100)/480);
 
         if(rank == "PILOT")
             exp = 0.8*flightTimeScore + 0.2*monthWorkingInAirlineScore;

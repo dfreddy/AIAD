@@ -29,10 +29,10 @@ public class Airplane extends Agent {
     int requiredExperienceForAttendants;
     int requiredExperienceForCabinChief;
 
-    //max value of investment for a recruitment
-    double maxAttendantInvestment;
-    double maxChiefInvestment;
-    double maxPilotInvestment;
+    //max payment of the airline per hour
+    //if experience > x ==> 10€/realFlightHours && 5€/connectionHours else 8€
+    double maxRealFlightHourPrice = 10;
+    double maxConnectionHourPrice = 5;
 
     //Required crew (podera ser necessário)
     int nrOfRequiredPilots;
@@ -42,15 +42,56 @@ public class Airplane extends Agent {
     // int available_spots;
     // int available_money;
 
-    public void generateFlightSpecification(){
+    // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
+    // if experience lower than 40 (0-100) then all the payment per hour is equal to 0.7,
+    //if higher then is proportional to experience/100,
+    //1 is the maximum valueForExperience.
+    public double calculateValueForExperience(int experience){
+        double valueForExperience;
 
+        if(experience < 40){
+            valueForExperience = 0.7;
+        }else{
+            valueForExperience = (experience-40d)/100d + 0.7;
+
+            if(valueForExperience > 1)
+                valueForExperience = 1;
+        }
+
+        return valueForExperience;
+    }
+
+    // This function calculates the maximum value the agent is wiling to pay for
+    // maxExperience = 100
+    // Pilots receive 50% more from the calculated MaxOffer,
+    // Cabin Chief receive 20%,
+    // Attendants, dont.
+    public double calculateMaxOffer(int experience, String rank){
+        double maxOffer;
+        double valueForExperience = calculateValueForExperience(experience);
+
+        if(rank == "PILOT"){
+            maxOffer = (valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice);
+            maxOffer = maxOffer + (maxOffer*0.5);
+        }
+        else if(rank == "CABIN_CHIEF"){
+            maxOffer = (valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice);
+            maxOffer = maxOffer + (maxOffer*0.2);
+        }
+        else
+            maxOffer = (valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice);
+
+        return maxOffer;
+    }
+
+    //This function generates all the flight specifications, namely the connection time, the real time spent in the air and the total flight time.
+    public void generateFlightSpecification(){
         //used to limit the number or hours in a flight being generated (numberOfConnections * timesOfConnection + FlightTime)
         int minFlightTime = 1;
         int maxFlightTime = 16;
         int minConnectionTime = 1;
         int maxConnectionTime = 2;
         int maxNumberOfConnections = 2;
-
 
         //generates the connectionsTime
         Random rnd = newRandom();
@@ -60,15 +101,15 @@ public class Airplane extends Agent {
             connectionTime = connectionTime + rnd.nextInt((maxConnectionTime - minConnectionTime) + 1) + minConnectionTime + rnd.nextDouble();
         }
 
-
         //generates the flightsTime and totalFlightTime
         flightsTime = rnd.nextInt((int) ((maxFlightTime - connectionTime) - minFlightTime) + 1) + minFlightTime + rnd.nextDouble();
         totalFlightTime = flightsTime + connectionTime;
     }
 
+    // Attributes the FlightType, which is important to generate the necessary crew for each flight and its experience
     public void attributeFlightType(){
         //attributes flightType
-        if(totalFlightTime <= 4){ //short term flight
+        if(totalFlightTime <= 4){
             flightType = "SHORT";
             generateNecessaryCrew(2, 4, 1, 2, 2, 2);
         }
@@ -82,6 +123,7 @@ public class Airplane extends Agent {
         }
     }
 
+    // This func attributes the required experience for each agent in each flight (it is optional)
     private void generateRequiredExperience(int attendantExp, int chiefExp, int pilotExp){
         requiredExperienceForAttendants = attendantExp;
         requiredExperienceForCabinChief = chiefExp;
@@ -92,9 +134,9 @@ public class Airplane extends Agent {
     private void generateNecessaryCrew(int minAttendant, int maxAttendant, int minCabinChief, int maxCabinChief, int minPilot, int maxPilot){
         Random rnd = newRandom();
 
-        nrOfRequiredAttendants = rnd.nextInt(maxAttendant - minAttendant) - minAttendant;
-        nrOfRequiredCabinChief = rnd.nextInt(maxCabinChief - minCabinChief) - minCabinChief;
-        nrOfRequiredPilots = rnd.nextInt(maxPilot - minPilot) + minPilot;
+        nrOfRequiredAttendants = rnd.nextInt((maxAttendant - minAttendant) + 1) + minAttendant;
+        nrOfRequiredCabinChief = rnd.nextInt((maxCabinChief - minCabinChief) + 1) + minCabinChief;
+        nrOfRequiredPilots = rnd.nextInt((maxPilot - minPilot) + 1) + minPilot;
     }
 
     protected void setup() {

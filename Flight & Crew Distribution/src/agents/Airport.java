@@ -18,10 +18,10 @@ public class Airport {
     public static final String DEFAULT_FILENAME = "leap.properties";
     private static Logger logger = Logger.getMyLogger("jade.Boot");
 
-    public static void teste(){
+    public static void testAirlinePersonality(){
         int s = 0, m=0, l=0;
 
-        for (int i = 0; i < 1000; i++){
+        for (int i = 0; i < 10; i++){
             Airplane a1 = new Airplane();
             a1.generateFlightSpecification();
             a1.attributeFlightType();
@@ -32,6 +32,14 @@ public class Airport {
             System.out.println("ConnectionTime: " + a1.connectionTime);
             System.out.println("TotalFlightTime: " + a1.totalFlightTime);
             System.out.println("FlightType: " + a1.flightType);
+            System.out.println("MaxOffer Pilot 40: " + a1.calculateMaxOffer(80, "PILOT"));
+            System.out.println("MaxOffer Cabin-Chief: " + a1.calculateMaxOffer(30, "CABIN_CHIEF"));
+            System.out.println("MaxOffer Attendant: " + a1.calculateMaxOffer(30, "ATTENDANT"));
+            System.out.println("MaxOffer Pilot 80: " + a1.calculateMaxOffer(80, "PILOT"));
+            System.out.println("MaxOffer Cabin-Chief: " + a1.calculateMaxOffer(80, "CABIN_CHIEF"));
+            System.out.println("MaxOffer Attendant: " + a1.calculateMaxOffer(80, "ATTENDANT"));
+
+
 
             if(a1.flightType == "SHORT"){ //short term flight
                 s++;
@@ -51,10 +59,11 @@ public class Airport {
         System.out.println("Nr of ShortFlights: " + s);
         System.out.println("Nr of MediumFlights: " + m);
         System.out.println("Nr of LongFlights: " + l);
+
     }
 
     public static void main(String[] args) {
-        //teste();
+        //testAirlinePersonality();
         try {
             ProfileImpl p = null;
             if (args.length > 0) {
