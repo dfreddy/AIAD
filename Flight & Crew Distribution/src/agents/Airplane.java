@@ -17,9 +17,10 @@ public class Airplane extends Agent {
             salary = rnd.nextInt(max_salary - 30) + 31, // TODO: remove
             initial_salary = salary, // TODO: remove
             initial_time_to_takeoff = 15000 + 5000 * (rnd.nextInt(5)), // initial time until takeoff varies between 15s and 40s
-            time_to_takeoff = initial_time_to_takeoff;
+            time_to_takeoff = initial_time_to_takeoff,
+            flight_length = rnd.nextInt(12) + 1; // TODO: replace wit one from branch
 
-    private Map<Float, ACLMessage> currentTransactions = new TreeMap<Float, ACLMessage>(Collections.reverseOrder()); // <rank, reply>
+    private Map<ACLMessage, Float> currentTransactions = new HashMap<ACLMessage, Float>(); // <reply, rank>
     HashSet<AID> crew = new HashSet<AID>(); // updates with accepted crew members
     private int n_offers_last_cycle = 0;
 
@@ -34,11 +35,11 @@ public class Airplane extends Agent {
                 if (msg != null && available_spots > 0 && !currentTransactions.containsKey(msg.getSender().getLocalName())) {
                     float cm_rank = Float.parseFloat(msg.getContent());
 
-                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalaryForCrewMember(cm_rank)) {
+                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalaryForCrewMember(cm_rank), flight_length) {
                         public int onEnd() {
                             ACLMessage barter_reply = getBarterReply();
                             float r = getRank();
-                            currentTransactions.put(r, barter_reply);
+                            currentTransactions.put(barter_reply, r);
 
                             return super.onEnd();
                         }
@@ -54,10 +55,12 @@ public class Airplane extends Agent {
 
         // ticker behaviour closes out all existing transactions
         // decides which proposal to accept
-        addBehaviour(new TickerBehaviour(this, 5000) {
+        addBehaviour(new TickerBehaviour(this, 4000) {
             protected void onTick() {
                 // do nothing if there's no finished transactions
                 if (currentTransactions.size() == 0) return;
+
+                time_to_takeoff = time_to_takeoff - 4000;
 
                 // decide what's the best offer to accept
                 // considers every offer, starting wit the CrewMembers wit higher rank, in a loop where the available_budget/spots is updated accordingly
@@ -71,9 +74,9 @@ public class Airplane extends Agent {
                 //  update performative for the reply if necessary
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
-                    if (pair.getValue() == null) continue;
+                    if (pair.getKey() == null) continue;
                     
-                    ACLMessage tmp_msg = (ACLMessage) pair.getValue();
+                    ACLMessage tmp_msg = (ACLMessage) pair.getKey();
                     if (Integer.parseInt(tmp_msg.getContent()) < best_offer_value) {
                         best_offer_value = Integer.parseInt(tmp_msg.getContent());
                         best_offer_msg = tmp_msg;
@@ -94,6 +97,7 @@ public class Airplane extends Agent {
                     available_budget = available_budget - best_offer_value;
                     available_spots--;
                     best_offer_msg.setPerformative(ACLMessage.AGREE);
+                    crew.add((AID)best_offer_msg.getAllReceiver().next());
                 }
 
 
@@ -101,9 +105,9 @@ public class Airplane extends Agent {
                 it = currentTransactions.entrySet().iterator();
                 while (it.hasNext()) {
                     HashMap.Entry pair = (HashMap.Entry) it.next();
-                    if (pair.getValue() == null) continue;
+                    if (pair.getKey() == null) continue;
 
-                    ACLMessage barter_reply = (ACLMessage) pair.getValue();
+                    ACLMessage barter_reply = (ACLMessage) pair.getKey();
                     send(barter_reply);
                 }
 
@@ -113,8 +117,8 @@ public class Airplane extends Agent {
 
 
                 // update time to takeoff
-                time_to_takeoff = time_to_takeoff - 5000;
-                System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
+                // time_to_takeoff = time_to_takeoff - 4000; -- done above --
+                System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s\n");
 
                 if (available_spots == 0) {
                     System.out.println("\n" + getLocalName() + " <- is ready to fly with $" + available_budget + " remaining");
@@ -128,11 +132,13 @@ public class Airplane extends Agent {
     // depending on time_to_takeoff and CM rank
     private int getSalaryForCrewMember(float rank) {
         int sal;
-        float percent_time_to_takeoff = time_to_takeoff/initial_time_to_takeoff;
-        // min sal = 30
+        int diff = initial_time_to_takeoff - time_to_takeoff;
+        double percent_time_to_takeoff = (100*diff / initial_time_to_takeoff);
+        percent_time_to_takeoff = percent_time_to_takeoff / 100;
 
         // time left until takeoff has more influence on salary variation
-        sal = (int) (min_salary + (((max_salary-min_salary)*0.4) * rank) + (((max_salary-min_salary)*0.6) * percent_time_to_takeoff));
+        // relatively arbitrary numbers
+        sal = (int) (min_salary/2 + ((max_salary-min_salary)*0.6 * rank) + ((max_salary-min_salary)*0.6 * percent_time_to_takeoff));
 
         return sal;
     }

@@ -21,11 +21,13 @@ public class CrewMember extends Agent {
     private String [] airportNameList = null;
 
     private float rank = rnd.nextFloat(); // temporary for testing
-    private int min_acceptable_offer = 30, max_acceptable_offer = (int) (min_acceptable_offer * 3 * rank);
+    private int min_acceptable_offer = 30, max_acceptable_offer; // min_acceptable_offer/2 + (int) (min_acceptable_offer * 5 * rank);
 
     private float waiting_multiplier = rnd.nextFloat() * 1.5f + 0.5f; // formula: rnd(0..1) * range + min_value --- this case: 0.5 ~ 2
     private int waiting_time = 0, max_waiting_time = (int) (30000 * waiting_multiplier); // this case: max_waiting_time = 15s ~ 60s
-    private float waiting_function = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5); // from 0 ~ 0.5, decreases as waiting_time increases
+    private float waiting_function = 0;
+    // = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5);
+    // from 0 ~ 0.5, decreases as waiting_time increases
 
     private int flight_length_preference = rnd.nextInt(12) + 1;
     private float flight_length_tolerance = rnd.nextFloat() * 3 + 3; // 3 ~ 6 tolerable flight length difference
@@ -48,6 +50,7 @@ public class CrewMember extends Agent {
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
                 waiting_time = waiting_time + 1000;
+                waiting_function = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5); // from 0 ~ 0.5, decreases as waiting_time increases
             }
         });
 
@@ -83,26 +86,32 @@ public class CrewMember extends Agent {
         }
         seq.addSubBehaviour(par);
 
-        seq.addSubBehaviour(new DelayBehaviour(this, rnd.nextInt(1000)) {
+        seq.addSubBehaviour(new DelayBehaviour(this, rnd.nextInt(500)) {
             public void handleElapsedTimeout() {
                 if (bestOffer != null) {
                     ACLMessage reply = bestOffer.createReply();
-                    System.out.println("=="+ getLocalName() + " <- Best Salary Offer is $" + bestSalaryOffer + " from " + bestOffer.getSender().getLocalName());
+                    System.out.println(getLocalName() + " <- Best Salary Offer is $" + bestSalaryOffer + " from " + bestOffer.getSender().getLocalName());
 
                     // RANDOM BASED BARTERING
                     int proposal;
                     if (bestSalaryOffer < min_acceptable_offer) bestSalaryOffer = min_acceptable_offer;
-                    if (bestSalaryOffer < max_acceptable_offer)
-                        // crew member will accept anything above x, depending on its rank
-                        // will propose a higher offer, depending on how comfortable it is to wait more
-                        proposal =  bestSalaryOffer + (int)(bestSalaryOffer * waiting_function);
-                    else
+
+                    // crew member will accept anything above x, depending on its rank
+                    // will propose a higher offer, depending on how comfortable it is to wait more
+                    max_acceptable_offer = (int) (min_acceptable_offer + min_acceptable_offer * (2*rank) * (5*waiting_function));
+                    System.out.println(getLocalName() + " <- max acceptable offer = " + max_acceptable_offer);
+
+                    if (bestSalaryOffer >= max_acceptable_offer)
                         proposal = bestSalaryOffer;
+                    else
+                        proposal = (int) (bestSalaryOffer + bestSalaryOffer * waiting_function);
+
+
 
                     reply.setPerformative( ACLMessage.REQUEST );
                     reply.setContent( proposal + "," + rank );
                     send(reply);
-                    System.out.println("=="+ getLocalName() + " <- Asking for $" + proposal + " from " + bestOffer.getSender().getLocalName() + " with a rank of " + (int) (rank*100));
+                    System.out.println(getLocalName() + " (" + (int) (rank*100) + ") <- Asking for $" + proposal + " from " + bestOffer.getSender().getLocalName());
                 }
             }
         });
@@ -123,14 +132,14 @@ public class CrewMember extends Agent {
                         return;
                     }
                     if( msg.getPerformative() == ACLMessage.AGREE)
-                        System.out.println("\n==" + getLocalName() + " <- GOT ACCEPTED by " + msg.getSender().getLocalName());
+                        System.out.println(getLocalName() + " <- GOT ACCEPTED by " + msg.getSender().getLocalName());
                     else {
-                        System.out.println("\n==" + getLocalName() + " <- GOT REJECTED by " + msg.getSender().getLocalName());
+                        System.out.println(getLocalName() + " <- GOT REJECTED by " + msg.getSender().getLocalName());
                         setup();
                     }
                 }
                 else {
-                    System.out.println("==" + getLocalName()
+                    System.out.println(getLocalName()
                             +" timed out... setting up again");
                     setup();
                 }

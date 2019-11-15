@@ -11,21 +11,20 @@ public class Transaction extends SequentialBehaviour {
     Random rnd = newRandom();
     ACLMessage msg, reply, barter_reply = null;
     String ConvID;
-    int price;
-    int result;
-    int final_offer;
+    int price, result, final_offer, flight_length;
     float rank;
 
-    public Transaction(Agent a, ACLMessage msg, int price) {
+    public Transaction(Agent a, ACLMessage msg, int price, int fl) {
         super(a);
         this.msg = msg;
         ConvID = msg.getConversationId();
         this.price = price;
+        this.flight_length = fl;
         this.result = 0;
     }
 
     public void onStart() {
-        addSubBehaviour(new DelayBehaviour( myAgent, rnd.nextInt(1000)) {
+        addSubBehaviour(new DelayBehaviour( myAgent, rnd.nextInt(500)) {
             public void handleElapsedTimeout() {
                 System.out.println(myAgent.getLocalName() + " <- QUERY from " +
                         msg.getSender().getLocalName() +
@@ -33,7 +32,7 @@ public class Transaction extends SequentialBehaviour {
 
                 reply = msg.createReply();
                 reply.setPerformative( ACLMessage.INFORM );
-                reply.setContent("" + price);
+                reply.setContent(price + "," + flight_length);
                 myAgent.send(reply);
             }
         });
@@ -42,12 +41,12 @@ public class Transaction extends SequentialBehaviour {
                 MessageTemplate.MatchPerformative( ACLMessage.REQUEST ),
                 MessageTemplate.MatchConversationId( ConvID ));
 
-        addSubBehaviour(new ReceiverBehaviour(myAgent, 2000, template) {
+        addSubBehaviour(new ReceiverBehaviour(myAgent, 2500, template) {
             public void handle( ACLMessage msg1) {
                 if (msg1 != null ) {
                     String[] content = (msg1.getContent().split(","));
-                    int final_offer = Integer.parseInt(content[0]);
-                    float rank = Float.parseFloat(content[1]);
+                    final_offer = Integer.parseInt(content[0]);
+                    rank = Float.parseFloat(content[1]);
 
                     // sets the default reply to REFUSE
                     // in the Airplane classe it will be decided if it's accepted
