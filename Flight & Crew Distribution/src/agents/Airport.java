@@ -18,6 +18,61 @@ public class Airport {
     public static final String DEFAULT_FILENAME = "leap.properties";
     private static Logger logger = Logger.getMyLogger("jade.Boot");
 
+    public static void testCrewPersonality(){
+        int s = 0, m=0, l=0, d=0;
+
+        for (int i = 0; i < 10000; i++){
+            Airplane b1 = new Airplane();
+            b1.generateFlightSpecification();
+            b1.attributeFlightType();
+
+            CrewMember a1 = new CrewMember();
+            a1.defineCrewRank();
+            a1.calculateExperience();
+            a1.calculateMaxMinOffer(b1.flightsTime, b1.connectionTime);
+
+
+            System.out.println("Ite: " + i);
+            System.out.println("FlightTime: " + b1.flightsTime);
+            System.out.println("ConnectionTime: " + b1.connectionTime);
+            System.out.println("TotalFlightTime: " + b1.totalFlightTime);
+            System.out.println("Rank: " + a1.rank);
+            System.out.println("Experience: " + a1.experience);
+            double airMaxOffer = b1.calculateMaxOffer(a1.experience, a1.rank);
+            System.out.println("AirlineMaxOffer: " + airMaxOffer);
+            System.out.println("CrewMaxOffer: " + a1.maxOffer);
+            System.out.println("CrewMinOffer: " + a1.minOffer);
+
+
+
+
+
+            if(a1.rank == "PILOT"){ //short term flight
+                s++;
+            }
+            else if(a1.rank == "CABIN_CHIEF"){ //mid term flight
+                m++;
+            }
+            else{ // long term flight
+                l++;
+            }
+
+            if(airMaxOffer < a1.minOffer)
+                d++;
+
+
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println("Nr of Pilots: " + s);
+        System.out.println("Nr of Cabin Chiefs: " + m);
+        System.out.println("Nr of Attendants: " + l);
+        System.out.println("Nr of Airline Offer > CrewMinOffer: " + d);
+
+
+    }
+
     public static void testAirlinePersonality(){
         int s = 0, m=0, l=0;
 
@@ -63,7 +118,7 @@ public class Airport {
     }
 
     public static void main(String[] args) {
-        //testAirlinePersonality();
+        testCrewPersonality();
         try {
             ProfileImpl p = null;
             if (args.length > 0) {

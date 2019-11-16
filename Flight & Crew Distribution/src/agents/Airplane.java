@@ -30,9 +30,8 @@ public class Airplane extends Agent {
     int requiredExperienceForCabinChief;
 
     //max payment of the airline per hour
-    //if experience > x ==> 10€/realFlightHours && 5€/connectionHours else 8€
-    double maxRealFlightHourPrice = 10;
-    double maxConnectionHourPrice = 5;
+    double maxRealFlightHourPrice = calcMaxRealFlightHourPrice();
+    double maxConnectionHourPrice = calcMaxConnectionHourPrice();
 
     //Required crew (podera ser necessário)
     int nrOfRequiredPilots;
@@ -41,6 +40,19 @@ public class Airplane extends Agent {
 
     // int available_spots;
     // int available_money;
+
+
+    //Price varies between 8-15€ per hour flying
+    public double calcMaxRealFlightHourPrice(){
+        Random rnd = newRandom();
+        return rnd.nextInt((15-8) + 1) + 8;
+    }
+
+    //Price varies between 4-8€ per hour in connection
+    public double calcMaxConnectionHourPrice(){
+        Random rnd = newRandom();
+        return rnd.nextInt((8-4) + 1) + 4;
+    }
 
     // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
     // if experience lower than 40 (0-100) then all the payment per hour is equal to 0.7,

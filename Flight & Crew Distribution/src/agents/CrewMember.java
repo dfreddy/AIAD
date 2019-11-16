@@ -22,13 +22,15 @@ public class CrewMember extends Agent {
     //Experience measures is from 0 to 100 and is calculated regarding other parameters
     int experience;
     String rank;
+    double maxOffer;
+    double minOffer;
 
     void defineCrewRank(){
         Random rnd = newRandom();
         int rndRank = rnd.nextInt(100);
-        if(rndRank <= 15)
+        if(rndRank < 15)
             rank = "PILOT";
-        else if( rndRank > 15 && rndRank <= 30)
+        else if( rndRank >= 15 && rndRank <= 30)
             rank = "CABIN_CHIEF";
         else
             rank = "ATTENDANT";
@@ -53,6 +55,58 @@ public class CrewMember extends Agent {
             exp = 0.4*flightTimeScore + 0.6*monthWorkingInAirlineScore;
 
         experience = (int) Math.ceil(exp);
+    }
+
+    // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
+    // if experience lower than 40 (0-100) then all the payment per hour is equal to 0.6,
+    //if higher then is proportional to experience/100,
+    //1 is the maximum valueForExperience.
+    public double calculateValueForExperience(int experience){
+        double valueForExperience;
+
+        if(experience < 40){
+            valueForExperience = 0.6;
+        }else{
+            valueForExperience = (experience-40d)/100d + 0.6;
+
+            if(valueForExperience > 1)
+                valueForExperience = 1;
+        }
+
+        return valueForExperience;
+    }
+
+    // This function calculates the maximum value the agent is wiling to pay for
+    // maxExperience = 100
+    // Pilots receive 50% more from the calculated MaxOffer,
+    // Cabin Chief receive 20%,
+    // Attendants, dont.
+    public void calculateMaxMinOffer(double realFlightTime, double connectionTime){
+        double valueForExperience = calculateValueForExperience(experience);
+        Random rnd = newRandom();
+        int maxRealFlightHourPrice = rnd.nextInt((20-10)+1) + 10;
+        int minRealFlightHourPrice = rnd.nextInt((10-5)+1) + 5;
+
+        int maxConnectionFlightHourPrice = rnd.nextInt((10-6)+1) + 6;
+        int minConnectionFlightHourPrice = rnd.nextInt((6-2)+1) + 2;
+
+
+        double maxOffer = (valueForExperience*maxRealFlightHourPrice*realFlightTime) + (connectionTime * maxConnectionFlightHourPrice);
+        double minOffer = (valueForExperience * minRealFlightHourPrice * realFlightTime) + (connectionTime * minConnectionFlightHourPrice);
+
+
+        if(rank == "PILOT"){
+            maxOffer = maxOffer + (maxOffer*0.5);
+            minOffer = maxOffer + (maxOffer*0.5);
+        }
+        else if(rank == "CABIN_CHIEF"){
+            maxOffer = maxOffer + (maxOffer*0.2);
+            minOffer = maxOffer + (maxOffer*0.2);
+        }
+        else{};
+
+        this.maxOffer = Math.max(maxOffer, minOffer);
+        this.minOffer = Math.min(minOffer, maxOffer);
     }
 
     protected void setup() {
