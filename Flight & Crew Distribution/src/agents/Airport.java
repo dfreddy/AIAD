@@ -87,7 +87,7 @@ public class Airport {
             System.out.println("ConnectionTime: " + a1.connectionTime);
             System.out.println("TotalFlightTime: " + a1.totalFlightTime);
             System.out.println("FlightType: " + a1.flightType);
-            System.out.println("MaxOffer Pilot 40: " + a1.calculateMaxOffer(80, "PILOT"));
+            System.out.println("MaxOffer Pilot 30: " + a1.calculateMaxOffer(30, "PILOT"));
             System.out.println("MaxOffer Cabin-Chief: " + a1.calculateMaxOffer(30, "CABIN_CHIEF"));
             System.out.println("MaxOffer Attendant: " + a1.calculateMaxOffer(30, "ATTENDANT"));
             System.out.println("MaxOffer Pilot 80: " + a1.calculateMaxOffer(80, "PILOT"));
