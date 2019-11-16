@@ -33,13 +33,13 @@ public class Airplane extends Agent {
 
                 // handle received msg only if it's not from a repeating sender
                 if (msg != null && available_spots > 0 && !currentTransactions.containsKey(msg.getSender().getLocalName())) {
-                    float cm_rank = Float.parseFloat(msg.getContent());
+                    float cm_exp = Float.parseFloat(msg.getContent());
 
-                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalaryForCrewMember(cm_rank), flight_length) {
+                    SequentialBehaviour t = new Transaction(myAgent, msg, getSalaryForCrewMember(cm_exp), flight_length) {
                         public int onEnd() {
                             ACLMessage barter_reply = getBarterReply();
-                            float r = getRank();
-                            currentTransactions.put(barter_reply, r);
+                            float exp = getExperience();
+                            currentTransactions.put(barter_reply, exp);
 
                             return super.onEnd();
                         }
@@ -130,7 +130,7 @@ public class Airplane extends Agent {
     }
 
     // depending on time_to_takeoff and CM rank
-    private int getSalaryForCrewMember(float rank) {
+    private int getSalaryForCrewMember(float exp) {
         int sal;
         int diff = initial_time_to_takeoff - time_to_takeoff;
         double percent_time_to_takeoff = (100*diff / initial_time_to_takeoff);
@@ -138,7 +138,7 @@ public class Airplane extends Agent {
 
         // time left until takeoff has more influence on salary variation
         // relatively arbitrary numbers
-        sal = (int) (min_salary/2 + ((max_salary-min_salary)*0.6 * rank) + ((max_salary-min_salary)*0.6 * percent_time_to_takeoff));
+        sal = (int) (min_salary/2 + ((max_salary-min_salary)*0.6 * exp) + ((max_salary-min_salary)*0.6 * percent_time_to_takeoff));
 
         return sal;
     }

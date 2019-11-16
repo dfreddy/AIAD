@@ -15,7 +15,7 @@ public class BigBrotherAgent extends Agent
 {
     protected void setup()
     {
-        addBehaviour(new TickerBehaviour(this, 2000) {
+        addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
                 AMSAgentDescription [] agents = null;
                 try {
@@ -34,6 +34,7 @@ public class BigBrotherAgent extends Agent
                         airportListString.append(mAgent.getName().getLocalName()).append(";");
                     }
                 }
+                // System.out.println( airportListString );
                 sendMessage(agents, airportListString.toString());
 
             }
