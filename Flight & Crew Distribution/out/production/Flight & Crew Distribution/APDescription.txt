@@ -1,0 +1,1 @@
+( ap-description  :name "platform" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://LAPTOP-BRMCO9AJ.localdomain:7778/acc))))

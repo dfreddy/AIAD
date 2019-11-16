@@ -47,15 +47,14 @@ public class Airport {
                 // create agents: 1 airplane "s1" and 1 crew member "crew_member"
                 AgentController airplaneController = containerController.createNewAgent("s1", "agents.Airplane", null);
                 airplaneController.start();
-                // airplaneController = containerController.createNewAgent("s2", "agents.Airplane", null);
-                // airplaneController.start();
+                airplaneController = containerController.createNewAgent("s2", "agents.Airplane", null);
+                airplaneController.start();
 
-                AgentController crewmemberController = containerController.createNewAgent("crew_member", "agents.CrewMember", null);
-                crewmemberController.start();
-                crewmemberController = containerController.createNewAgent("crew_member_2", "agents.CrewMember", null);
-                crewmemberController.start();
-                crewmemberController = containerController.createNewAgent("crew_member_3", "agents.CrewMember", null);
-                crewmemberController.start();
+                for(int i=0; i<50; i++) {
+                    String name = "crew_member" + i;
+                    AgentController crewmemberController = containerController.createNewAgent(name, "agents.CrewMember", null);
+                    crewmemberController.start();
+                }
 
             } else {
                 Runtime.instance().createAgentContainer(p);
@@ -77,6 +76,100 @@ public class Airport {
     }
 
     public Airport() {
+    }
+
+    public static void testCrewPersonality(){
+        int s = 0, m=0, l=0, d=0;
+
+        for (int i = 0; i < 10000; i++){
+            Airplane b1 = new Airplane();
+            b1.generateFlightSpecification();
+            b1.attributeFlightType();
+
+            CrewMember a1 = new CrewMember();
+            a1.defineCrewRank();
+            a1.calculateExperience();
+            a1.calculateMaxMinOffer(b1.flightsTime, b1.connectionTime);
+
+
+            System.out.println("Ite: " + i);
+            System.out.println("FlightTime: " + b1.flightsTime);
+            System.out.println("ConnectionTime: " + b1.connectionTime);
+            System.out.println("TotalFlightTime: " + b1.totalFlightTime);
+            System.out.println("Rank: " + a1.rank);
+            System.out.println("Experience: " + a1.experience);
+            double airMaxOffer = b1.calculateMaxOffer(a1.experience, a1.rank);
+            System.out.println("AirlineMaxOffer: " + airMaxOffer);
+            System.out.println("CrewMaxOffer: " + a1.maxOffer);
+            System.out.println("CrewMinOffer: " + a1.minOffer);
+
+            if(a1.rank == "PILOT"){ //short term flight
+                s++;
+            }
+            else if(a1.rank == "CABIN_CHIEF"){ //mid term flight
+                m++;
+            }
+            else{ // long term flight
+                l++;
+            }
+
+            if(airMaxOffer < a1.minOffer)
+                d++;
+
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println("Nr of Pilots: " + s);
+        System.out.println("Nr of Cabin Chiefs: " + m);
+        System.out.println("Nr of Attendants: " + l);
+        System.out.println("Nr of Airline Offer < CrewMinOffer: " + d);
+
+
+    }
+
+    public static void testAirlinePersonality(){
+        int s = 0, m=0, l=0;
+
+        for (int i = 0; i < 10000; i++){
+            Airplane a1 = new Airplane();
+            a1.generateFlightSpecification();
+            a1.attributeFlightType();
+
+
+            System.out.println("Ite: " + i);
+            System.out.println("FlightTime: " + a1.flightsTime);
+            System.out.println("ConnectionTime: " + a1.connectionTime);
+            System.out.println("TotalFlightTime: " + a1.totalFlightTime);
+            System.out.println("FlightType: " + a1.flightType);
+            System.out.println("MaxOffer Pilot 30: " + a1.calculateMaxOffer(30, "PILOT"));
+            System.out.println("MaxOffer Cabin-Chief: " + a1.calculateMaxOffer(30, "CABIN_CHIEF"));
+            System.out.println("MaxOffer Attendant: " + a1.calculateMaxOffer(30, "ATTENDANT"));
+            System.out.println("MaxOffer Pilot 80: " + a1.calculateMaxOffer(80, "PILOT"));
+            System.out.println("MaxOffer Cabin-Chief: " + a1.calculateMaxOffer(80, "CABIN_CHIEF"));
+            System.out.println("MaxOffer Attendant: " + a1.calculateMaxOffer(80, "ATTENDANT"));
+
+
+
+            if(a1.flightType == "SHORT"){ //short term flight
+                s++;
+            }
+            else if(a1.flightType == "MEDIUM"){ //mid term flight
+                m++;
+            }
+            else{ // long term flight
+                l++;
+            }
+
+
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println("Nr of ShortFlights: " + s);
+        System.out.println("Nr of MediumFlights: " + m);
+        System.out.println("Nr of LongFlights: " + l);
+
     }
 
     public static Properties parseCmdLineArgs(String[] args) throws IllegalArgumentException {

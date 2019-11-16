@@ -7,7 +7,10 @@ import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
 import java.util.*;
 
 import static java.lang.Integer.parseInt;
@@ -15,16 +18,22 @@ import static java.lang.Integer.parseInt;
 public class CrewMember extends Agent {
 
     private Random rnd = newRandom();
-    private int bestSalaryOffer = 0;
-    private float bestOfferRating = 0;
+    private double bestSalaryOffer;
+    private float bestOfferRating;
     private ACLMessage bestOffer;
     SequentialBehaviour seq;
     ParallelBehaviour par;
 
     private ArrayList<String> airplaneNameList = new ArrayList<>();
 
+    /*
     private float experience = rnd.nextFloat(); // temporary for testing
-    private int min_acceptable_offer = 30, max_acceptable_offer; // min_acceptable_offer/2 + (int) (min_acceptable_offer * 5 * experience);
+    private int minOffer = 30, maxOffer; // minOffer/2 + (int) (minOffer * 5 * experience);
+    */
+    int proposal;
+    int experience;
+    String rank;
+    double maxOffer, floatingOffer, minOffer;
 
     private float waiting_multiplier = rnd.nextFloat() * 1.5f + 0.5f; // formula: rnd(0..1) * range + min_value --- this case: 0.5 ~ 2
     private int waiting_time = 0, max_waiting_time = (int) (30000 * waiting_multiplier); // this case: max_waiting_time = 15s ~ 60s
@@ -32,12 +41,16 @@ public class CrewMember extends Agent {
     // = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5);
     // from 0 ~ 0.5, decreases as waiting_time increases
 
-    private int flight_length_preference = rnd.nextInt(12) + 1;
-    private float flight_length_tolerance = rnd.nextFloat() * 3 + 3; // 3 ~ 6 tolerable flight length difference
+    private int flight_length_preference = rnd.nextInt(15) + 1;
+    private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
 
     protected void setup() {
         bestSalaryOffer = 0;
         bestOffer = null;
+        bestOfferRating = 0;
+
+        defineCrewRank();
+        calculateExperience();
 
         seq = new SequentialBehaviour();
         addBehaviour(seq);
@@ -47,7 +60,7 @@ public class CrewMember extends Agent {
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
                 waiting_time = waiting_time + 1000;
-                waiting_function = (float) (1 / (1 + Math.exp(-max_waiting_time / waiting_time)) - 0.5); // from 0 ~ 0.5, decreases as waiting_time increases
+                waiting_function = (float) Math.abs(1 / (1 + Math.exp(-max_waiting_time / waiting_time)) - 1); // from 0 ~ 0.5, increases wit waiting_time
             }
         });
 
@@ -72,7 +85,10 @@ public class CrewMember extends Agent {
                         airplaneNameList.add(s);
                     }
 
-                    startNegotiating();
+                    if(airplaneNameList.size() > 0)
+                        startNegotiating();
+                    else
+                        addBigBrotherListener();
                 }
 
                 else addBigBrotherListener();
@@ -86,20 +102,25 @@ public class CrewMember extends Agent {
                 MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                 MessageTemplate.MatchConversationId(msg.getConversationId()));
 
+        if(airplaneNameList.size() == 0) setup();
+
         for (String s : airplaneNameList) {
             msg.addReceiver( new AID(s, AID.ISLOCALNAME ));
-            msg.setContent("" + experience);
+            msg.setContent("" + experience + "," + rank);
 
-            par.addSubBehaviour( new ReceiverBehaviour( this, 1000, template) {
+            par.addSubBehaviour( new ReceiverBehaviour( this, 2000, template) {
                 public void handle(ACLMessage msg) {
                     if (msg != null) {
                         String[] content = (msg.getContent().split(","));
                         int offer = Integer.parseInt(content[0]);
-                        int flight_length = Integer.parseInt(content[1]);
+                        double flight_time = Double.parseDouble(content[1]);
+                        double connection_time = Double.parseDouble(content[2]);
+
+                        calculateMaxMinOffer(flight_time, connection_time);
 
                         // use the flight_length to rate the salary offer
-                        float fl_multiplier = getFlightLengthPreferenceMultiplier(flight_length);
-                        float offer_rating = offer * fl_multiplier;
+                        float fl_multiplier = getFlightLengthPreferenceMultiplier(flight_time + connection_time);
+                        float offer_rating = (float) (offer / (flight_time + connection_time)) * fl_multiplier;
 
                         if (offer_rating > bestOfferRating) {
                             bestOfferRating = offer_rating;
@@ -116,27 +137,31 @@ public class CrewMember extends Agent {
             public void handleElapsedTimeout() {
                 if (bestOffer != null) {
                     ACLMessage reply = bestOffer.createReply();
-                    System.out.println(getLocalName() + " <- Best Salary Offer is $" + bestSalaryOffer + " from " + bestOffer.getSender().getLocalName());
+                    // System.out.println(getLocalName() + " <- Best Salary Offer is $" + bestSalaryOffer + " from " + bestOffer.getSender().getLocalName());
 
                     // RANDOM BASED BARTERING
-                    int proposal;
-                    if (bestSalaryOffer < min_acceptable_offer) bestSalaryOffer = min_acceptable_offer;
+                    if (bestSalaryOffer < minOffer) bestSalaryOffer = minOffer;
 
                     // crew member will accept anything above x, depending on its experience
                     // will propose a higher offer, depending on how comfortable it is to wait more
-                    max_acceptable_offer = (int) (min_acceptable_offer + min_acceptable_offer * (2*experience) * (5*waiting_function));
-                    // System.out.println(getLocalName() + " <- max acceptable offer = " + max_acceptable_offer);
 
-                    if (bestSalaryOffer >= max_acceptable_offer)
-                        proposal = bestSalaryOffer;
+                    float crew_patience = rnd.nextFloat()*3 + 1;
+
+                    floatingOffer = maxOffer - (maxOffer - minOffer) * crew_patience * waiting_function;
+                    // minOffer + minOffer * (5*waiting_function);
+
+                    // System.out.println(getLocalName() + " <- max acceptable offer = " + maxOffer);
+
+                    if (bestSalaryOffer >= maxOffer)
+                        proposal = (int) bestSalaryOffer;
                     else
                         proposal = (int) (bestSalaryOffer + bestSalaryOffer * waiting_function);
 
-
                     reply.setPerformative( ACLMessage.REQUEST );
-                    reply.setContent( proposal + "," + experience );
+                    reply.setContent( proposal + "," + experience + "," + rank );
                     send(reply);
-                    System.out.println(getLocalName() + " (" + (int) (experience*100) + ") <- Asking for $" + proposal + " from " + bestOffer.getSender().getLocalName());
+
+                    // System.out.println(getLocalName() + " (" + experience + ") <- Asking for $" + proposal + " from " + bestOffer.getSender().getLocalName());
                 }
             }
         });
@@ -151,42 +176,111 @@ public class CrewMember extends Agent {
         seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, receiverTemplate){
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
-                    if( msg.getPerformative() == ACLMessage.AGREE)
-                        System.out.println(getLocalName() + " <- GOT ACCEPTED by " + msg.getSender().getLocalName());
+                    if (msg.getPerformative() == ACLMessage.AGREE) {
+                        System.out.println(getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
+                        doDelete();
+                    }
                     else {
-                        System.out.println(getLocalName() + " <- GOT REJECTED by " + msg.getSender().getLocalName());
+                        // System.out.println(getLocalName() + " <- GOT REJECTED with $" + proposal);
                         setup();
                     }
                 }
                 else {
-                    System.out.println(getLocalName()
-                            +" timed out... setting up again");
+                    // System.out.println(getLocalName() +" timed out... setting up again");
                     setup();
                 }
             }
         });
 
-        /*  Cyclic Behaviour for catching
-        MessageTemplate receiverBigBrotherTemplate = MessageTemplate.and(
-                MessageTemplate.MatchConversationId(big_brother_msg.getConversationId()), MessageTemplate.MatchPerformative(ACLMessage.INFORM)
-                );
-
-        seq.addSubBehaviour(new CyclicBehaviour(){
-                ACLMessage msg = receive(receiverBigBrotherTemplate);
-                if (msg != null ) {
-                    airportNameList = msg.getContent().split(";");
-                    System.out.println(myAgent.getLocalName() + " got airport list: " + msg.getContent());
-                    return;
-                }
-        });
-        */
-
         send(msg);
     }
 
-    // ========== Utility methods =========================
-    private float getFlightLengthPreferenceMultiplier(int flight_length) {
-        int diff = Math.abs(flight_length_preference - flight_length);
+    // ========================= Utility methods ========================= //
+    void defineCrewRank(){
+        Random rnd = newRandom();
+        int rndRank = rnd.nextInt(100);
+        if(rndRank < 15)
+            rank = "PILOT";
+        else if( rndRank >= 15 && rndRank <= 30)
+            rank = "CABIN_CHIEF";
+        else
+            rank = "ATTENDANT";
+    }
+
+    void calculateExperience() {
+        double exp = 0;
+        Random rnd = newRandom();
+        int flightTime;
+        int monthWorkingInAirline;
+
+        flightTime = rnd.nextInt(1000);
+        monthWorkingInAirline = rnd.nextInt(480);
+        int flightTimeScore = (int) Math.ceil((flightTime*100)/1000);
+        int monthWorkingInAirlineScore = (int) Math.ceil((monthWorkingInAirline*100)/480);
+
+        if(rank == "PILOT")
+            exp = 0.8*flightTimeScore + 0.2*monthWorkingInAirlineScore;
+        else if(rank == "CABIN_CHIEF")
+            exp = 0.6*flightTimeScore + 0.4*monthWorkingInAirlineScore;
+        else
+            exp = 0.4*flightTimeScore + 0.6*monthWorkingInAirlineScore;
+
+        experience = (int) Math.ceil(exp);
+    }
+
+    // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
+    // if experience lower than 40 (0-100) then all the payment per hour is equal to 0.6,
+    //if higher then is proportional to experience/100,
+    //1 is the maximum valueForExperience.
+    public double calculateValueForExperience(int experience){
+        double valueForExperience;
+
+        if(experience < 40){
+            valueForExperience = 0.6;
+        }else{
+            valueForExperience = (experience-40d)/100d + 0.6;
+
+            if(valueForExperience > 1)
+                valueForExperience = 1;
+        }
+
+        return valueForExperience;
+    }
+
+    // This function calculates the maximum value the agent is wiling to pay for
+    // maxExperience = 100
+    // Pilots receive 50% more from the calculated MaxOffer,
+    // Cabin Chief receive 20%,
+    // Attendants, dont.
+    public void calculateMaxMinOffer(double realFlightTime, double connectionTime) {
+        double valueForExperience = calculateValueForExperience(experience);
+        Random rnd = newRandom();
+        int maxRealFlightHourPrice = rnd.nextInt((20-10)+1) + 10;
+        int minRealFlightHourPrice = rnd.nextInt((10-5)+1) + 5;
+
+        int maxConnectionFlightHourPrice = rnd.nextInt((10-6)+1) + 6;
+        int minConnectionFlightHourPrice = rnd.nextInt((6-2)+1) + 2;
+
+        double maxOffer = (valueForExperience*maxRealFlightHourPrice*realFlightTime) + (connectionTime * maxConnectionFlightHourPrice);
+        double minOffer = (valueForExperience * minRealFlightHourPrice * realFlightTime) + (connectionTime * minConnectionFlightHourPrice);
+
+
+        if(rank == "PILOT"){
+            maxOffer = maxOffer + (maxOffer*0.5);
+            minOffer = minOffer + (minOffer*0.5);
+        }
+        else if(rank == "CABIN_CHIEF"){
+            maxOffer = maxOffer + (maxOffer*0.2);
+            minOffer = minOffer + (minOffer*0.2);
+        }
+        else{};
+
+        this.maxOffer = Math.max(maxOffer, minOffer);
+        this.minOffer = Math.min(minOffer, maxOffer);
+    }
+
+    private float getFlightLengthPreferenceMultiplier(double flight_length) {
+        double diff = Math.abs(flight_length_preference - flight_length);
 
         if (diff == 0) return 2f;
 
