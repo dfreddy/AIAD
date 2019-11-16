@@ -68,7 +68,7 @@ public class Airport {
         System.out.println("Nr of Pilots: " + s);
         System.out.println("Nr of Cabin Chiefs: " + m);
         System.out.println("Nr of Attendants: " + l);
-        System.out.println("Nr of Airline Offer > CrewMinOffer: " + d);
+        System.out.println("Nr of Airline Offer < CrewMinOffer: " + d);
 
 
     }
@@ -76,7 +76,7 @@ public class Airport {
     public static void testAirlinePersonality(){
         int s = 0, m=0, l=0;
 
-        for (int i = 0; i < 10; i++){
+        for (int i = 0; i < 10000; i++){
             Airplane a1 = new Airplane();
             a1.generateFlightSpecification();
             a1.attributeFlightType();
@@ -118,7 +118,7 @@ public class Airport {
     }
 
     public static void main(String[] args) {
-        testCrewPersonality();
+        testAirlinePersonality();
         try {
             ProfileImpl p = null;
             if (args.length > 0) {
