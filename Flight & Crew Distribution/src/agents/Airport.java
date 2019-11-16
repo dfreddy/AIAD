@@ -44,9 +44,6 @@ public class Airport {
             System.out.println("CrewMinOffer: " + a1.minOffer);
 
 
-
-
-
             if(a1.rank == "PILOT"){ //short term flight
                 s++;
             }
