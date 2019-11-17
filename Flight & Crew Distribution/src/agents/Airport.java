@@ -51,8 +51,6 @@ public class Airport {
                 airplaneController.start();
                 airplaneController = containerController.createNewAgent("s3", "agents.Airplane", null);
                 airplaneController.start();
-                airplaneController = containerController.createNewAgent("s4", "agents.Airplane", null);
-                airplaneController.start();
 
                 for(int i=0; i<100; i++) {
                     String name = "crew_member" + i;

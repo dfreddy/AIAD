@@ -96,7 +96,8 @@ public class Airplane extends Agent {
                     // wait to receive transactions
                     addBehaviour(new WakerBehaviour(myAgent, 5000) {
                         protected void onWake() {
-                            System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
+                            if(available_spots > 0)
+                                System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
 
                             handleBiz(receivedTransactions);
                             receivedTransactions.clear();
@@ -211,7 +212,11 @@ public class Airplane extends Agent {
         int diff = available_spots;
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
         diff = diff - available_spots;
-        System.out.println(getLocalName() + " <- employed " + diff);
+
+        boolean last_cycle = available_spots == 0 && diff == 0;
+
+        if (!last_cycle)
+            System.out.println(getLocalName() + " <- employed " + diff);
 
         if (available_spots == 0 && time_to_takeoff <= 0) {
             System.out.println(getLocalName() + " <- TOOK OFF");
@@ -224,7 +229,7 @@ public class Airplane extends Agent {
             doDelete();
         }
 
-        if (time_to_takeoff > 0) {
+        if (time_to_takeoff > 0 && !last_cycle) {
             System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
             System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
