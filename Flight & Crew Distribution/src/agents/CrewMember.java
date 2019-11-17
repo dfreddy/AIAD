@@ -210,9 +210,9 @@ public class CrewMember extends Agent {
     void defineCrewRank(){
         Random rnd = newRandom();
         int rndRank = rnd.nextInt(100);
-        if(rndRank < 20)
+        if(rndRank < 25)
             rank = "PILOT";
-        else if( rndRank >= 20 && rndRank <= 40)
+        else if( rndRank >= 25 && rndRank <= 50)
             rank = "CABIN_CHIEF";
         else
             rank = "ATTENDANT";
