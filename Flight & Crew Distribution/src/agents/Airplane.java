@@ -94,9 +94,9 @@ public class Airplane extends Agent {
                 if (is_handling_business == false) {
                     is_handling_business = true;
                     // wait to receive transactions
-                    addBehaviour(new WakerBehaviour(myAgent, 4000) {
+                    addBehaviour(new WakerBehaviour(myAgent, 5000) {
                         protected void onWake() {
-                            // System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
+                            System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
 
                             handleBiz(receivedTransactions);
                             receivedTransactions.clear();
@@ -165,7 +165,7 @@ public class Airplane extends Agent {
 
             // System.out.println(getLocalName() + " <- best rating = " + best_rating);
 
-            if (best_rating >= 0.6 && best_position != null && best_proposal != null) {
+            if (best_rating >= 0.7 && best_position != null && best_proposal != null) {
                 // if accepted
                 switch (best_position) {
                     case "PILOT":
@@ -208,20 +208,24 @@ public class Airplane extends Agent {
         is_handling_business = false;
         // System.out.println(getLocalName() + " <- finished handling business");
 
+        int diff = available_spots;
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
+        diff = diff - available_spots;
+        System.out.println(getLocalName() + " <- employed " + diff);
 
         if (available_spots == 0 && time_to_takeoff <= 0) {
-            System.out.println(getLocalName() + " <- is taking off");
+            System.out.println(getLocalName() + " <- TOOK OFF");
             doDelete();
         }
 
         if (available_spots > 0 && time_to_takeoff <= 0) {
-            System.out.println(getLocalName() + " <- couldn't fly");
+            System.out.println(getLocalName() + " <- couldn't fly. Missing " + remainingPilotSpots + " PILOTS, " +
+                    remainingCabinChiefSpots + " CABIN CHIEFS and " + remainingAttendantsSpots + " ATTENDANTS.");
             doDelete();
         }
 
         if (time_to_takeoff > 0) {
-            System.out.println(getLocalName() + " <- NEEDS Pilots: " + remainingPilotSpots + ", Cabin Chiefs: " + remainingCabinChiefSpots + ", Attendants: " + remainingAttendantsSpots);
+            System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
             System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
     }
@@ -251,7 +255,7 @@ public class Airplane extends Agent {
                 break;
         }
 
-        return percent_time_to_takeoff * 0.8 + percent_position * 0.2;
+        return percent_time_to_takeoff * 0.9 + percent_position * 0.1;
     }
 
     // judges the proposal according to the experience
@@ -264,23 +268,23 @@ public class Airplane extends Agent {
         return rating * getNecessityIndex(rank);
     }
 
-    //Price varies between 8-15€ per hour flying
-    public double calcMaxRealFlightHourPrice(){
+    //Price varies between 12-15€ per hour flying
+    public double calcMaxRealFlightHourPrice() {
         Random rnd = newRandom();
-        return rnd.nextInt((15-8) + 1) + 8;
+        return rnd.nextInt((15-12) + 1) + 12;
     }
 
-    //Price varies between 4-8€ per hour in connection
-    public double calcMaxConnectionHourPrice(){
+    //Price varies between 6-8€ per hour in connection
+    public double calcMaxConnectionHourPrice() {
         Random rnd = newRandom();
-        return rnd.nextInt((8-4) + 1) + 4;
+        return rnd.nextInt((8-6) + 1) + 6;
     }
 
     // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
     // if experience lower than 40 (0-100) then all the payment per hour is equal to 0.7,
     //if higher then is proportional to experience/100,
     //1 is the maximum valueForExperience.
-    public double calculateValueForExperience(int experience){
+    public double calculateValueForExperience(int experience) {
         double valueForExperience;
 
         if(experience < 40){
@@ -304,7 +308,7 @@ public class Airplane extends Agent {
         double maxOffer;
         double valueForExperience = calculateValueForExperience(experience);
 
-        maxOffer = (valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice);
+        maxOffer = 10 * ((valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice)) / totalFlightTime;
 
         if(rank == "PILOT"){
             maxOffer = maxOffer + (maxOffer*0.5);

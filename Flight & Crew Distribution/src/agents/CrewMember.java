@@ -117,7 +117,7 @@ public class CrewMember extends Agent {
                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                     MessageTemplate.MatchConversationId(msg.getConversationId()));
 
-            par.addSubBehaviour( new ReceiverBehaviour( this, 2000, template) {
+            par.addSubBehaviour( new ReceiverBehaviour( this, 3000, template) {
                 public void handle(ACLMessage msg) {
                     if (msg != null) {
                         String[] content = (msg.getContent().split(","));
@@ -129,7 +129,8 @@ public class CrewMember extends Agent {
 
                         // use the flight_length to rate the salary offer
                         float fl_multiplier = getFlightLengthPreferenceMultiplier(flight_time + connection_time);
-                        float offer_rating = (float) (offer / (flight_time + connection_time)) * fl_multiplier;
+                        float offer_rating = (float) offer * fl_multiplier;
+                        // System.out.println(getLocalName() + " (" + experience + ") " + flight_length_preference + "hrs" + " <- rating for $" + offer + " from " + msg.getSender().getLocalName() + " is: " + offer_rating);
 
                         if (offer_rating > bestOfferRating) {
                             bestOfferRating = offer_rating;
@@ -182,11 +183,11 @@ public class CrewMember extends Agent {
                 , MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
         );
 
-        seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, receiverTemplate){
+        seq.addSubBehaviour(new ReceiverBehaviour(this, 6000, receiverTemplate){
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
                     if (msg.getPerformative() == ACLMessage.AGREE) {
-                        System.out.println("\t\t" + getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
+                        // System.out.println("\t\t" + getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
                         doDelete();
                     }
                     else {
@@ -209,9 +210,9 @@ public class CrewMember extends Agent {
     void defineCrewRank(){
         Random rnd = newRandom();
         int rndRank = rnd.nextInt(100);
-        if(rndRank < 15)
+        if(rndRank < 20)
             rank = "PILOT";
-        else if( rndRank >= 15 && rndRank <= 30)
+        else if( rndRank >= 20 && rndRank <= 40)
             rank = "CABIN_CHIEF";
         else
             rank = "ATTENDANT";
@@ -292,9 +293,11 @@ public class CrewMember extends Agent {
     private float getFlightLengthPreferenceMultiplier(double flight_length) {
         double diff = Math.abs(flight_length_preference - flight_length);
 
-        if (diff == 0) return 2f;
+        if (diff == 0) return 1.6f;
 
-        return (float) (1 / Math.pow(diff/flight_length_tolerance, 1/3)); // multiplier ranges from 1 ~ 1.8 with these flight tolerance numbers
+        double pwr = Math.pow(diff/flight_length_tolerance, 1/5d);
+
+        return (float) (1 / pwr); // multiplier ranges from 0 ~ 1.6 with these flight tolerance numbers
     }
 
     //  --- generating Conversation IDs -------------------

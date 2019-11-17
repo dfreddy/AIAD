@@ -79,6 +79,7 @@ public class BigBrotherAgent extends Agent {
 
         seq.addSubBehaviour(new DelayBehaviour(this, 1000) {
             public void handleElapsedTimeout() {
+
                 System.out.println("");
                 System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
                         ", CABIN CHIEFS: " + existingCabinChiefs +
@@ -95,6 +96,7 @@ public class BigBrotherAgent extends Agent {
 
         seq.addSubBehaviour(new TickerBehaviour(this, 4000) {
             protected void onTick() {
+
                 System.out.println("");
                 System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
                         ", CABIN CHIEFS: " + existingCabinChiefs +

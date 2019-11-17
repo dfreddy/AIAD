@@ -50,7 +50,7 @@ public class Airport {
                 airplaneController = containerController.createNewAgent("s2", "agents.Airplane", null);
                 airplaneController.start();
 
-                for(int i=0; i<50; i++) {
+                for(int i=0; i<100; i++) {
                     String name = "crew_member" + i;
                     AgentController crewmemberController = containerController.createNewAgent(name, "agents.CrewMember", null);
                     crewmemberController.start();
