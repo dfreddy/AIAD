@@ -12,18 +12,12 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
-import static java.util.stream.Collectors.toMap;
-
 public class Airplane extends Agent {
     private Random rnd = newRandom();
-    private int min_salary = 30, max_salary = 100, // TODO: make min_salary variable --- make max_salary vary wit the min_salary
-            available_spots = 2,
-            available_budget = max_salary * available_spots,
-            salary = rnd.nextInt(max_salary - 30) + 31, // TODO: remove
-            initial_salary = salary, // TODO: remove
+    private int available_spots,
             initial_time_to_takeoff = 15000 + 5000 * (rnd.nextInt(5)), // initial time until takeoff varies between 15s and 40s
             time_to_takeoff = initial_time_to_takeoff,
-            flight_length = rnd.nextInt(12) + 1; // TODO: replace wit one from branch
+            spent_budget = 0;
 
     //Flight Specifications
     double totalFlightTime, flightsTime, connectionTime;
@@ -38,39 +32,37 @@ public class Airplane extends Agent {
     double maxRealFlightHourPrice = calcMaxRealFlightHourPrice();
     double maxConnectionHourPrice = calcMaxConnectionHourPrice();
 
-    //Required crew (podera ser necessário)
     private int nrOfRequiredPilots, nrOfRequiredAttendants, nrOfRequiredCabinChief,
-                remainingPilotSpots, remainingAttendantsSpots, remainingCabinChiefSpots;
+            remainingPilotSpots, remainingAttendantsSpots, remainingCabinChiefSpots;
 
-    private Map<ACLMessage, Map<Integer, String>> currentTransactions = new HashMap<ACLMessage, Map<Integer, String>>(); // <reply, exp, rank>
+    private Map<ACLMessage, Map<Integer, String>> receivedTransactions = new HashMap<ACLMessage, Map<Integer, String>>(); // <reply, exp, rank>
     HashSet<AID> crew = new HashSet<AID>(); // updates with accepted crew members
-    private int n_offers_last_cycle = 0;
+    private boolean is_handling_business;  // impedes the airline from repeatedly starting
 
     protected void setup() {
         generateFlightSpecification();
         attributeFlightType();
+        available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
 
         System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
                 time_to_takeoff = time_to_takeoff - 1000;
+
             }
         });
 
-        addBehaviour(new TickerBehaviour(this, 5000) {
-            protected void onTick() {
-                System.out.println(getLocalName() + " <- NEEDS Pilots: " + remainingPilotSpots + ", Cabin Chiefs: " + remainingCabinChiefSpots + ", Attendants: " + remainingAttendantsSpots);
-            }
-        });
+        is_handling_business = false;
 
-
-        addBehaviour(new CyclicBehaviour(this) {
+        // cyclic behaviour that goes on receiving transactions
+        // ignores ones from repeating senders
+        CyclicBehaviour receive_transactions = new CyclicBehaviour() {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
-
                 // handle received msg only if it's not from a repeating sender
-                if (msg != null && available_spots > 0 && !currentTransactions.containsKey(msg.getSender().getLocalName())) {
+
+                if (msg != null && available_spots > 0 && !receivedTransactions.containsKey(msg)) {
                     String[] content = (msg.getContent().split(","));
                     int cm_exp = Integer.parseInt(content[0]);
                     String cm_rank = content[1];
@@ -83,111 +75,40 @@ public class Airplane extends Agent {
                             Map<Integer, String> cm = new HashMap<Integer, String>();
                             cm.put(exp, r);
 
-                            currentTransactions.put(barter_reply, cm);
+                            receivedTransactions.put(barter_reply, cm);
 
                             return super.onEnd();
                         }
                     };
 
                     addBehaviour(t);
+
                 } else block();
+            }
+        };
 
+        CyclicBehaviour biz_cycle = new CyclicBehaviour() {
+            public void action() {
 
-                // delay behaviour processes all existing transactions
-                // decides which proposals to accept
-                addBehaviour(new DelayBehaviour(this.myAgent, 3000) {
-                    protected void handleElapsedTimeout() {
-                        // System.out.println(getLocalName() + " <- NEEDS Pilots: " + remainingPilotSpots + ", Cabin Chiefs: " + remainingCabinChiefSpots + ", Attendants: " + remainingAttendantsSpots);
+                // wont create another waker behaviour until the last one has ended
+                if (is_handling_business == false) {
+                    is_handling_business = true;
+                    // wait to receive transactions
+                    addBehaviour(new WakerBehaviour(myAgent, 4000) {
+                        protected void onWake() {
+                            // System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
 
-                        // do nothing if there's no finished transactions
-                        if (currentTransactions.size() == 0 || available_spots == 0) {
-                            finishCycle();
-                            return;
+                            handleBiz(receivedTransactions);
+                            receivedTransactions.clear();
                         }
-
-                        // decide what's the best offer to accept
-                        // considers every offer, starting wit the CrewMembers wit higher rank, in a loop where the available_budget/spots is updated accordingly
-                        ArrayList<ACLMessage> finishedTransactions;
-
-                        while(currentTransactions.size() > 0) {
-                            currentTransactions.remove(null);
-
-                            Iterator it = currentTransactions.entrySet().iterator();
-                            double best_rating = 0;
-                            ACLMessage best_proposal = null;
-                            String best_position = null;
-
-                            while (it.hasNext()) {
-                                Map.Entry pair = (Map.Entry) it.next();
-                                if (pair.getKey() == null) continue;
-
-                                Iterator it2 = ((Map<Integer, String>) (pair.getValue())).entrySet().iterator();
-
-                                ACLMessage tmp_msg = (ACLMessage) pair.getKey();
-
-                                Map.Entry pair2 = (Map.Entry) it2.next();
-                                double rating = getProposalRating((Integer) pair2.getKey(), (String) pair2.getValue(), Integer.parseInt(tmp_msg.getContent()));
-
-                                // AID receiver = (AID)(tmp_msg.getAllReceiver().next());
-                                // System.out.println(getLocalName() + "<- rating for " + receiver.getLocalName() + " (" + (String) pair2.getValue() + ") is: " + rating);
-
-                                if (rating >= best_rating) {
-                                    best_rating = rating;
-                                    best_proposal = tmp_msg;
-                                    best_position = (String) pair2.getValue();
-                                }
-                            }
-
-                            if(best_proposal == null) {
-                                System.out.println(getLocalName() + " <- found null");
-                            }
-
-                            if (best_rating >= 0.4 && best_position != null && best_proposal != null) {
-                                // if accepted
-                                switch (best_position) {
-                                    case "PILOT":
-                                        if(remainingPilotSpots > 0) {
-                                            remainingPilotSpots--;
-                                            best_proposal.setPerformative(ACLMessage.AGREE);
-                                            crew.add((AID) best_proposal.getAllReceiver().next());
-                                        }
-                                        break;
-                                    case "CABIN_CHIEF":
-                                        if(remainingCabinChiefSpots > 0) {
-                                            remainingCabinChiefSpots--;
-                                            best_proposal.setPerformative(ACLMessage.AGREE);
-                                            crew.add((AID) best_proposal.getAllReceiver().next());
-                                        }
-                                        break;
-                                    case "ATTENDANT":
-                                        if(remainingAttendantsSpots > 0) {
-                                            remainingAttendantsSpots--;
-                                            best_proposal.setPerformative(ACLMessage.AGREE);
-                                            crew.add((AID) best_proposal.getAllReceiver().next());
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-
-                            if(best_proposal != null) {
-                                send(best_proposal);
-                                currentTransactions.remove(best_proposal);
-                            }
-                        }
-
-                        currentTransactions.clear();
-
-                        finishCycle();
-                    }
-                });
-
-                block(3000);
-
+                    });
+                }
 
             }
-        });
+        };
+
+        addBehaviour(receive_transactions);
+        addBehaviour(biz_cycle);
 
         addBehaviour(new GCAgent(this, 5000));
     }
@@ -195,19 +116,113 @@ public class Airplane extends Agent {
     // =============================== //
     // ========== FUNCTIONS ========== //
     // =============================== //
+
+    // decides which proposals to accept
+    // waits for 3s to receive all transactions, then handles them
+    private void handleBiz(Map<ACLMessage, Map<Integer, String>> currentTransactions) {
+
+        if (currentTransactions.size() == 0 || available_spots == 0) {
+            finishCycle(); // do nothing if there's no finished transactions
+            return;
+        }
+
+        // decide what's the best offer to accept
+        // considers every offer, starting wit the CrewMembers wit higher rank, in a loop where the available_budget/spots is updated accordingly
+        ArrayList<ACLMessage> finishedTransactions;
+
+        while(currentTransactions.size() > 0) {
+            currentTransactions.remove(null);
+
+            Iterator it = currentTransactions.entrySet().iterator();
+            double best_rating = 0;
+            ACLMessage best_proposal = null;
+            String best_position = null;
+
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                if (pair.getKey() == null) continue;
+
+                Iterator it2 = ((Map<Integer, String>) (pair.getValue())).entrySet().iterator();
+
+                ACLMessage tmp_msg = (ACLMessage) pair.getKey();
+
+                Map.Entry pair2 = (Map.Entry) it2.next();
+                double rating = getProposalRating((Integer) pair2.getKey(), (String) pair2.getValue(), Integer.parseInt(tmp_msg.getContent()));
+
+                // AID receiver = (AID)(tmp_msg.getAllReceiver().next());
+                // System.out.println(getLocalName() + "<- rating for " + receiver.getLocalName() + " (" + (String) pair2.getValue() + ") is: " + rating);
+
+                if (rating >= best_rating) {
+                    best_rating = rating;
+                    best_proposal = tmp_msg;
+                    best_position = (String) pair2.getValue();
+                }
+            }
+
+            if(best_proposal == null) {
+                // System.out.println(getLocalName() + " <- found null");
+            }
+
+            // System.out.println(getLocalName() + " <- best rating = " + best_rating);
+
+            if (best_rating >= 0.6 && best_position != null && best_proposal != null) {
+                // if accepted
+                switch (best_position) {
+                    case "PILOT":
+                        if(remainingPilotSpots > 0) {
+                            remainingPilotSpots--;
+                            best_proposal.setPerformative(ACLMessage.AGREE);
+                            crew.add((AID) best_proposal.getAllReceiver().next());
+                        }
+                        break;
+                    case "CABIN_CHIEF":
+                        if(remainingCabinChiefSpots > 0) {
+                            remainingCabinChiefSpots--;
+                            best_proposal.setPerformative(ACLMessage.AGREE);
+                            crew.add((AID) best_proposal.getAllReceiver().next());
+                        }
+                        break;
+                    case "ATTENDANT":
+                        if(remainingAttendantsSpots > 0) {
+                            remainingAttendantsSpots--;
+                            best_proposal.setPerformative(ACLMessage.AGREE);
+                            crew.add((AID) best_proposal.getAllReceiver().next());
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if(best_proposal != null) {
+                send(best_proposal);
+                currentTransactions.remove(best_proposal);
+                spent_budget = spent_budget + Integer.parseInt(best_proposal.getContent());
+            }
+        }
+
+        finishCycle();
+    }
+
     private void finishCycle() {
-        System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s\n");
+        is_handling_business = false;
+        // System.out.println(getLocalName() + " <- finished handling business");
 
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
 
         if (available_spots == 0 && time_to_takeoff <= 0) {
-            System.out.println(getLocalName() + " <- is ready to fly");
+            System.out.println(getLocalName() + " <- is taking off");
             doDelete();
         }
 
         if (available_spots > 0 && time_to_takeoff <= 0) {
             System.out.println(getLocalName() + " <- couldn't fly");
             doDelete();
+        }
+
+        if (time_to_takeoff > 0) {
+            System.out.println(getLocalName() + " <- NEEDS Pilots: " + remainingPilotSpots + ", Cabin Chiefs: " + remainingCabinChiefSpots + ", Attendants: " + remainingAttendantsSpots);
+            System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
     }
 
@@ -236,15 +251,15 @@ public class Airplane extends Agent {
                 break;
         }
 
-        return percent_time_to_takeoff * 0.7 + percent_position * 0.3;
+        return percent_time_to_takeoff * 0.8 + percent_position * 0.2;
     }
 
     // judges the proposal according to the experience
     // a high rating means it's a good proposal, for the airline
     private double getProposalRating(int exp, String rank, int proposal) {
-       double maxOffer = calculateMaxOffer(exp, rank);
+        double maxOffer = calculateMaxOffer(exp, rank);
 
-       double rating = maxOffer / proposal;
+        double rating = maxOffer / proposal;
 
         return rating * getNecessityIndex(rank);
     }
@@ -378,19 +393,6 @@ public class Airplane extends Agent {
         return sal;
     }
 
-    private int getSalary() {
-        return this.salary;
-    }
-
-    // the max budget for a single crew member cannot exceed the predicted salary for a crew member by 50%
-    private int getMaxSalaryBudget() {
-        int b = (int)(this.max_salary * 1.5);
-        if (b > available_budget)
-            b = available_budget;
-
-        return b;
-    }
-
     /*
     public void transactionFailed() {
         transaction_failed = true;
@@ -419,8 +421,8 @@ public class Airplane extends Agent {
                 if (! old.contains(msg))
                     seen.add( msg);
                 else {
-                    System.out.println("==" + getLocalName() + " <- Flushing message:");
-                    dumpMessage( msg );
+                    // System.out.println("==" + getLocalName() + " <- Flushing message:");
+                    // dumpMessage( msg );
                 }
                 msg = myAgent.receive();
             }

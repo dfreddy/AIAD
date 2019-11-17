@@ -14,7 +14,6 @@ public class ReceiverBehaviour extends SimpleBehaviour {
 
     public ACLMessage getMessage() { return msg; }
 
-
     public ReceiverBehaviour(Agent a, int millis, MessageTemplate mt) {
         super(a);
         timeOut = millis;

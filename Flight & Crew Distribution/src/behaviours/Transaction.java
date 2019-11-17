@@ -1,7 +1,5 @@
 package behaviours;
 
-import behaviours.*;
-import behaviours.ReceiverBehaviour;
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;

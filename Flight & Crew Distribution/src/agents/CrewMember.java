@@ -52,10 +52,15 @@ public class CrewMember extends Agent {
         defineCrewRank();
         calculateExperience();
 
-        seq = new SequentialBehaviour();
-        addBehaviour(seq);
+        startBehaviours();
+    }
 
-        par = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+    protected void startBehaviours() {
+        ACLMessage informBigBrother = new ACLMessage();
+        informBigBrother.setContent(rank);
+        informBigBrother.setPerformative(ACLMessage.INFORM);
+        informBigBrother.addReceiver(new AID( "big_brother",  AID.ISLOCALNAME ));
+        send(informBigBrother);
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
@@ -74,7 +79,7 @@ public class CrewMember extends Agent {
 
         airplaneNameList.clear();
 
-        seq.addSubBehaviour(new ReceiverBehaviour(this, 1000, templateBigBrother){
+        addBehaviour(new ReceiverBehaviour(this, 1000, templateBigBrother){
             @Override
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
@@ -97,16 +102,20 @@ public class CrewMember extends Agent {
     }
 
     private void startNegotiating() {
+        // if(airplaneNameList.size() == 0) startBehaviours();
+        seq = new SequentialBehaviour();
+        par = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        addBehaviour(seq);
+
         ACLMessage msg = newMsg(ACLMessage.QUERY_REF);
-        MessageTemplate template = MessageTemplate.and(
-                MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                MessageTemplate.MatchConversationId(msg.getConversationId()));
-
-        if(airplaneNameList.size() == 0) setup();
-
+        // send query to airplanes and wait for replies
         for (String s : airplaneNameList) {
             msg.addReceiver( new AID(s, AID.ISLOCALNAME ));
             msg.setContent("" + experience + "," + rank);
+
+            MessageTemplate template = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                    MessageTemplate.MatchConversationId(msg.getConversationId()));
 
             par.addSubBehaviour( new ReceiverBehaviour( this, 2000, template) {
                 public void handle(ACLMessage msg) {
@@ -131,6 +140,7 @@ public class CrewMember extends Agent {
                 }
             });
         }
+
         seq.addSubBehaviour(par);
 
         seq.addSubBehaviour(new DelayBehaviour(this, rnd.nextInt(500)) {
@@ -167,31 +177,31 @@ public class CrewMember extends Agent {
         });
 
         // template match <...CID &  AGREE or REFUSE ...>
-        MessageTemplate receiverTemplate = MessageTemplate.and(
-                MessageTemplate.MatchConversationId(msg.getConversationId()), MessageTemplate.or(
-                        MessageTemplate.MatchPerformative(ACLMessage.AGREE)
-                        , MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
-                ));
+        MessageTemplate receiverTemplate = MessageTemplate.or(
+                MessageTemplate.MatchPerformative(ACLMessage.AGREE)
+                , MessageTemplate.MatchPerformative(ACLMessage.REFUSE)
+        );
 
         seq.addSubBehaviour(new ReceiverBehaviour(this, 5000, receiverTemplate){
             public void handle(ACLMessage msg) {
                 if (msg != null ) {
                     if (msg.getPerformative() == ACLMessage.AGREE) {
-                        System.out.println(getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
+                        System.out.println("\t\t" + getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
                         doDelete();
                     }
                     else {
-                        // System.out.println(getLocalName() + " <- GOT REJECTED with $" + proposal);
-                        setup();
+                        // System.out.println("\t\t\t\t" + getLocalName() + " <- GOT REJECTED with $" + proposal);
+                        startBehaviours();
                     }
                 }
                 else {
                     // System.out.println(getLocalName() +" timed out... setting up again");
-                    setup();
+                    startBehaviours();
                 }
             }
         });
 
+        // System.out.println("Sent initial msg");
         send(msg);
     }
 
@@ -330,8 +340,8 @@ public class CrewMember extends Agent {
                 if (! old.contains(msg))
                     seen.add( msg);
                 else {
-                    System.out.println("==" + getLocalName() + " <- Flushing message:");
-                    dumpMessage( msg );
+                    // System.out.println("==" + getLocalName() + " <- Flushing message:");
+                    // dumpMessage( msg );
                 }
                 msg = myAgent.receive();
             }
