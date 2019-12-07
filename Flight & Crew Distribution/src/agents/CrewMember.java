@@ -38,11 +38,27 @@ public class CrewMember extends Agent {
     private float waiting_multiplier = rnd.nextFloat() * 1.5f + 0.5f; // formula: rnd(0..1) * range + min_value --- this case: 0.5 ~ 2
     private int waiting_time = 0, max_waiting_time = (int) (30000 * waiting_multiplier); // this case: max_waiting_time = 15s ~ 60s
     private float waiting_function = 0;
+    float crew_patience = rnd.nextFloat()*3 + 1;
     // = (float) (1 / (1 + Math.exp(-max_waiting_time/waiting_time)) - 0.5);
     // from 0 ~ 0.5, decreases as waiting_time increases
 
     private int flight_length_preference = rnd.nextInt(15) + 1;
     private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
+
+    /*
+    Crew Member Differentiators
+    - personal id
+        will work as the key to a hashset contained in the Lil Brother
+        the hashset will be first updated when the crew member has its values
+        the hashset will have the happiness field updated when the agent gets the job
+    - flight length tolerance
+    - max waiting time
+    - crew patience (waiting time tolerance)
+    - rank
+    - experience
+    - max offer
+    - happiness (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
+     */
 
     protected void setup() {
         bestSalaryOffer = 0;
@@ -155,8 +171,6 @@ public class CrewMember extends Agent {
 
                     // crew member will accept anything above x, depending on its experience
                     // will propose a higher offer, depending on how comfortable it is to wait more
-
-                    float crew_patience = rnd.nextFloat()*3 + 1;
 
                     floatingOffer = maxOffer - (maxOffer - minOffer) * crew_patience * waiting_function;
                     // minOffer + minOffer * (5*waiting_function);

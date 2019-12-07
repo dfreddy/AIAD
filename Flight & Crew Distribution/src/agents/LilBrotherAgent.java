@@ -2,27 +2,25 @@ package agents;
 
 import behaviours.DelayBehaviour;
 import jade.core.Agent;
-import jade.core.AID;
-
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.TickerBehaviour;
-import jade.core.behaviours.WakerBehaviour;
 import jade.domain.AMSService;
-import jade.domain.FIPAAgentManagement.*;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /*
-    Keeps track of existing agents in the system
-    Relays this information to the agents that need it
+    Keeps track of the personality values of the agents
+    Saves them into a csv when there are no more
  */
-public class BigBrotherAgent extends Agent {
+public class LilBrotherAgent extends Agent {
+    private HashMap<Integer, Object> crew_members_values = new HashMap<>();
+
     private ArrayList existingCrewMembers = new ArrayList();
     private int existingPilots = 0, existingCabinChiefs = 0, existingAttendants = 0;
 
@@ -34,7 +32,7 @@ public class BigBrotherAgent extends Agent {
                 try {
                     SearchConstraints c = new SearchConstraints();
                     c.setMaxResults ((long) -1);
-                    agents = AMSService.search( BigBrotherAgent.this, new AMSAgentDescription (), c );
+                    agents = AMSService.search( LilBrotherAgent.this, new AMSAgentDescription (), c );
                 }
                 catch (Exception e) {
                     System.out.println( "Problem searching AMS: " + e );
