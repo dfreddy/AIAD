@@ -46,6 +46,7 @@ public class CrewMember extends Agent {
     private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
 
     private int happiness = 0;
+    private int id;
     /*
     Crew Member Values
     - id
@@ -57,7 +58,6 @@ public class CrewMember extends Agent {
     - max waiting time (not the actual time waiting, but the variable randomly defined above)
     - rank
     - experience
-    - max offer (not the actual max offer received, but the one defined for him)
     - happiness (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
      */
     private HashMap<String, Double> crew_member_values = new HashMap<String, Double>();
@@ -72,6 +72,15 @@ public class CrewMember extends Agent {
 
         // send msg to lil brother
         // resend msg after an offer is accepted, with updated happiness values
+        id = Integer.parseInt(getLocalName().substring(11));
+        ACLMessage informLilBrother = new ACLMessage();
+        informLilBrother.setPerformative(ACLMessage.INFORM);
+        informLilBrother.addReceiver(new AID( "lil_brother",  AID.ISLOCALNAME ));
+        informLilBrother.setContent(id + "," + flight_length_tolerance + "," + crew_patience + "," + max_waiting_time +
+                                    "," + rank + "," + experience + "," + happiness);
+        send(informLilBrother);
+        // System.out.println(getLocalName() + " <- send msg to lil brother: " + informLilBrother.getContent());
+
 
         startBehaviours();
     }
@@ -207,6 +216,16 @@ public class CrewMember extends Agent {
                 if (msg != null ) {
                     if (msg.getPerformative() == ACLMessage.AGREE) {
                         // System.out.println("\t\t" + getLocalName() + " <- (" + rank + ") GOT ACCEPTED by " + msg.getSender().getLocalName() + " for $" + proposal);
+
+                        // resend values to lil_brother but now with updated happiness
+                        updateHappiness();
+                        ACLMessage informLilBrother = new ACLMessage();
+                        informLilBrother.setPerformative(ACLMessage.INFORM);
+                        informLilBrother.addReceiver(new AID( "lil_brother",  AID.ISLOCALNAME ));
+                        informLilBrother.setContent(id + "," + flight_length_tolerance + "," + crew_patience + "," + max_waiting_time +
+                                "," + rank + "," + experience + "," + happiness);
+                        send(informLilBrother);
+
                         doDelete();
                     }
                     else {
@@ -226,6 +245,14 @@ public class CrewMember extends Agent {
     }
 
     // ========================= Utility methods ========================= //
+    void updateHappiness() {
+        // TODO
+        //  get happiness values as (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
+
+        // for now
+        happiness = 1;
+    }
+
     void defineCrewRank(){
         Random rnd = newRandom();
         int rndRank = rnd.nextInt(100);

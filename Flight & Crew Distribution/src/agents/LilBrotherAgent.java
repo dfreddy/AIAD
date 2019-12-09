@@ -21,8 +21,6 @@ import java.util.HashMap;
 public class LilBrotherAgent extends Agent {
     private HashMap<Integer, CrewMemberValues> crew_members_values = new HashMap<Integer, CrewMemberValues>(); // Integer is the crew_member id
     private int existingAirplanes;
-    private ArrayList existingCrewMembers = new ArrayList();
-    private int existingPilots = 0, existingCabinChiefs = 0, existingAttendants = 0;
 
     protected void setup()
     {
@@ -48,7 +46,8 @@ public class LilBrotherAgent extends Agent {
                 }
 
                 if(existingAirplanes == 0) {
-                    // do export to csv
+                    // TODO
+                    //  export crew_member_values to csv
                 }
             }
         });
@@ -61,12 +60,15 @@ public class LilBrotherAgent extends Agent {
                     // add/update crew_member_values with the content
                     String[] content = (msg.getContent().split(","));
                     int c_id = Integer.parseInt(content[0]);
+
                     CrewMemberValues tmp_cmv = new CrewMemberValues(c_id,
                             Float.parseFloat(content[1]), Float.parseFloat(content[2]),
-                            Integer.parseInt(content[3]), content[4], Integer.parseInt(content[5]),
-                            Double.parseDouble(content[6]), Integer.parseInt(content[7]));
+                            Integer.parseInt(content[3]), content[4],
+                            Integer.parseInt(content[5]), Float.parseFloat(content[6]));
 
                     crew_members_values.put(c_id, tmp_cmv);
+                    System.out.println("\t\t\t\t\t\t\t\t" + getLocalName() +
+                                        " <- received: " + tmp_cmv.toString());
                 }
                 else block();
             }
@@ -76,22 +78,24 @@ public class LilBrotherAgent extends Agent {
 
 class CrewMemberValues {
     public int id;
-    public float fl_tolerance;
-    public float crew_patience;
+    public float fl_tolerance, crew_patience;
     public int max_waiting_time;
     public String rank;
     public int exp;
-    public double max_offer;
     public float happiness;
 
-    public CrewMemberValues(int id, float fl, float cp, int mwt, String r, int exp, double mo, float h) {
+    public CrewMemberValues(int id, float fl, float cp, int mwt, String r, int exp, float h) {
         this.id = id;
         this.fl_tolerance = fl;
         this.crew_patience = cp;
         this.max_waiting_time = mwt;
         this.rank = r;
         this.exp = exp;
-        this.max_offer = mo;
         this.happiness = h;
+    }
+
+    public String toString() {
+        return "id: " + id + ", fl_tolerance: " + fl_tolerance + ", crew patience: " + crew_patience +
+                ", max_waiting_time: " + max_waiting_time + ", rank: " + rank + ", exp: " + exp + ", happiness: " + happiness;
     }
 }
