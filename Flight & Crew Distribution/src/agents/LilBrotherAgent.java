@@ -19,15 +19,17 @@ import java.util.HashMap;
     Saves them into a csv when there are no more
  */
 public class LilBrotherAgent extends Agent {
-    private HashMap<Integer, Object> crew_members_values = new HashMap<>();
-
+    private HashMap<Integer, HashMap<String, Integer>> crew_members_values = new HashMap<Integer, HashMap<String, Integer>>(); // Integer is the crew_member id
+    private int existingAirplanes;
     private ArrayList existingCrewMembers = new ArrayList();
     private int existingPilots = 0, existingCabinChiefs = 0, existingAttendants = 0;
 
     protected void setup()
     {
-        addBehaviour(new TickerBehaviour(this, 1000) {
+        addBehaviour(new TickerBehaviour(this, 2000) {
             protected void onTick() {
+                existingAirplanes = 0;
+
                 AMSAgentDescription [] agents = null;
                 try {
                     SearchConstraints c = new SearchConstraints();
@@ -39,15 +41,15 @@ public class LilBrotherAgent extends Agent {
                     e.printStackTrace();
                 }
 
-                StringBuilder airportListString = new StringBuilder();
                 for(AMSAgentDescription mAgent : agents){
                     if(mAgent.getName().getName().startsWith("s")){
-                        airportListString.append(mAgent.getName().getLocalName()).append(";");
+                        existingAirplanes++;
                     }
                 }
-                // System.out.println( airportListString );
-                sendMessage(agents, airportListString.toString());
 
+                if(existingAirplanes == 0) {
+                    // do export to csv
+                }
             }
         });
 
@@ -55,22 +57,8 @@ public class LilBrotherAgent extends Agent {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 
-                if(msg != null && !existingCrewMembers.contains(msg.getSender().getLocalName())) {
-                    existingCrewMembers.add(msg.getSender().getLocalName());
-                    switch(msg.getContent()) {
-                        case "PILOT":
-                            existingPilots++;
-                            break;
-                        case "CABIN_CHIEF":
-                            existingCabinChiefs++;
-                            break;
-                        case "ATTENDANT":
-                            existingAttendants++;
-                            break;
-                        default:
-                            break;
-                    }
-
+                if(msg != null) {
+                    // add/update crew_member_values with the content
                 }
                 else block();
             }

@@ -46,19 +46,20 @@ public class CrewMember extends Agent {
     private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
 
     /*
-    Crew Member Differentiators
-    - personal id
+    Crew Member Values
+    - id
         will work as the key to a hashset contained in the Lil Brother
         the hashset will be first updated when the crew member has its values
         the hashset will have the happiness field updated when the agent gets the job
-    - flight length tolerance
+    - flight length tolerance (fl tolerance)
     - max waiting time
-    - crew patience (waiting time tolerance)
+    - crew patience / waiting time tolerance (wt tolerance)
     - rank
     - experience
     - max offer
     - happiness (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
      */
+    private HashMap<String, Integer> crew_member_values = new HashMap<String, Integer>();
 
     protected void setup() {
         bestSalaryOffer = 0;
