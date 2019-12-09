@@ -1,9 +1,7 @@
 package agents;
 
-import behaviours.DelayBehaviour;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
@@ -11,8 +9,9 @@ import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-import java.util.ArrayList;
+import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
 
 /*
     Keeps track of the personality values of the agents
@@ -21,10 +20,18 @@ import java.util.HashMap;
 public class LilBrotherAgent extends Agent {
     private HashMap<Integer, CrewMemberValues> crew_members_values = new HashMap<Integer, CrewMemberValues>(); // Integer is the crew_member id
     private int existingAirplanes;
+    private PrintWriter writer;
 
     protected void setup()
     {
-        addBehaviour(new TickerBehaviour(this, 2000) {
+        try {
+            FileWriter f = new FileWriter("crew_members.csv", true);
+            BufferedWriter b = new BufferedWriter(f);
+            writer = new PrintWriter(b);
+        }
+        catch (IOException e) {e.printStackTrace();}
+
+        addBehaviour(new TickerBehaviour(this, 3000) {
             protected void onTick() {
                 existingAirplanes = 0;
 
@@ -46,8 +53,30 @@ public class LilBrotherAgent extends Agent {
                 }
 
                 if(existingAirplanes == 0) {
+                    System.out.println(getLocalName() + " <- saving crew member values");
                     // TODO
                     //  export crew_member_values to csv
+                    StringBuilder sb = new StringBuilder();
+                    for (Map.Entry<Integer, CrewMemberValues> entry : crew_members_values.entrySet()) {
+                        CrewMemberValues tmp = entry.getValue();
+                        sb.append("\n");
+                        sb.append(tmp.id);
+                        sb.append(",");
+                        sb.append(tmp.fl_tolerance);
+                        sb.append(",");
+                        sb.append(tmp.crew_patience);
+                        sb.append(",");
+                        sb.append(tmp.max_waiting_time);
+                        sb.append(",");
+                        sb.append(tmp.rank);
+                        sb.append(",");
+                        sb.append(tmp.exp);
+                        sb.append(",");
+                        sb.append(tmp.happiness);
+                    }
+                    writer.write(sb.toString());
+                    writer.close();
+                    doDelete();
                 }
             }
         });
@@ -68,7 +97,7 @@ public class LilBrotherAgent extends Agent {
 
                     crew_members_values.put(c_id, tmp_cmv);
                     System.out.println("\t\t\t\t\t\t\t\t" + getLocalName() +
-                                        " <- received: " + tmp_cmv.toString());
+                            " <- received: " + tmp_cmv.toString());
                 }
                 else block();
             }

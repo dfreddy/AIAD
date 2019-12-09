@@ -98,7 +98,7 @@ public class BigBrotherAgent extends Agent {
 
         seq.addSubBehaviour(new DelayBehaviour(this, 1000) {});
 
-        seq.addSubBehaviour(new TickerBehaviour(this, 4000) {
+        seq.addSubBehaviour(new TickerBehaviour(this, 5000) {
             protected void onTick() {
 
                 System.out.println("");

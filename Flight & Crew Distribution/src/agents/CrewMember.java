@@ -76,7 +76,7 @@ public class CrewMember extends Agent {
         ACLMessage informLilBrother = new ACLMessage();
         informLilBrother.setPerformative(ACLMessage.INFORM);
         informLilBrother.addReceiver(new AID( "lil_brother",  AID.ISLOCALNAME ));
-        informLilBrother.setContent(id + "," + flight_length_tolerance + "," + crew_patience + "," + max_waiting_time +
+        informLilBrother.setContent(id + "," + flight_length_tolerance + "," + crew_patience + "," + max_waiting_time/1000 +
                                     "," + rank + "," + experience + "," + happiness);
         send(informLilBrother);
         // System.out.println(getLocalName() + " <- send msg to lil brother: " + informLilBrother.getContent());

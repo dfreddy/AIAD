@@ -49,12 +49,14 @@ public class Airport {
                 // create agents: 1 airplane "s1" and 1 crew member "crew_member"
                 AgentController airplaneController = containerController.createNewAgent("s1", "agents.Airplane", null);
                 airplaneController.start();
+                /*
                 airplaneController = containerController.createNewAgent("s2", "agents.Airplane", null);
                 airplaneController.start();
                 airplaneController = containerController.createNewAgent("s3", "agents.Airplane", null);
                 airplaneController.start();
+                 */
 
-                for(int i=0; i<8; i++) {
+                for(int i=0; i<30; i++) {
                     String name = "crew_member" + i;
                     AgentController crewmemberController = containerController.createNewAgent(name, "agents.CrewMember", null);
                     crewmemberController.start();
