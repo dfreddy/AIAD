@@ -45,6 +45,7 @@ public class CrewMember extends Agent {
     private int flight_length_preference = rnd.nextInt(15) + 1;
     private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
 
+    private int happiness = 0;
     /*
     Crew Member Values
     - id
@@ -52,14 +53,14 @@ public class CrewMember extends Agent {
         the hashset will be first updated when the crew member has its values
         the hashset will have the happiness field updated when the agent gets the job
     - flight length tolerance (fl tolerance)
-    - max waiting time
     - crew patience / waiting time tolerance (wt tolerance)
+    - max waiting time (not the actual time waiting, but the variable randomly defined above)
     - rank
     - experience
-    - max offer
+    - max offer (not the actual max offer received, but the one defined for him)
     - happiness (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
      */
-    private HashMap<String, Integer> crew_member_values = new HashMap<String, Integer>();
+    private HashMap<String, Double> crew_member_values = new HashMap<String, Double>();
 
     protected void setup() {
         bestSalaryOffer = 0;
@@ -68,6 +69,9 @@ public class CrewMember extends Agent {
 
         defineCrewRank();
         calculateExperience();
+
+        // send msg to lil brother
+        // resend msg after an offer is accepted, with updated happiness values
 
         startBehaviours();
     }

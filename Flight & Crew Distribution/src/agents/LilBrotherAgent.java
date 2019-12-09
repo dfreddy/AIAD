@@ -19,7 +19,7 @@ import java.util.HashMap;
     Saves them into a csv when there are no more
  */
 public class LilBrotherAgent extends Agent {
-    private HashMap<Integer, HashMap<String, Integer>> crew_members_values = new HashMap<Integer, HashMap<String, Integer>>(); // Integer is the crew_member id
+    private HashMap<Integer, CrewMemberValues> crew_members_values = new HashMap<Integer, CrewMemberValues>(); // Integer is the crew_member id
     private int existingAirplanes;
     private ArrayList existingCrewMembers = new ArrayList();
     private int existingPilots = 0, existingCabinChiefs = 0, existingAttendants = 0;
@@ -59,60 +59,39 @@ public class LilBrotherAgent extends Agent {
 
                 if(msg != null) {
                     // add/update crew_member_values with the content
+                    String[] content = (msg.getContent().split(","));
+                    int c_id = Integer.parseInt(content[0]);
+                    CrewMemberValues tmp_cmv = new CrewMemberValues(c_id,
+                            Float.parseFloat(content[1]), Float.parseFloat(content[2]),
+                            Integer.parseInt(content[3]), content[4], Integer.parseInt(content[5]),
+                            Double.parseDouble(content[6]), Integer.parseInt(content[7]));
+
+                    crew_members_values.put(c_id, tmp_cmv);
                 }
                 else block();
             }
         });
-
-        // inform the user of the existing crew members in the market
-        SequentialBehaviour seq = new SequentialBehaviour();
-
-        seq.addSubBehaviour(new DelayBehaviour(this, 1000) {
-            public void handleElapsedTimeout() {
-
-                System.out.println("");
-                System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
-                        ", CABIN CHIEFS: " + existingCabinChiefs +
-                        ", ATTENDANTS: " + existingAttendants + "\n");
-
-                existingCrewMembers.clear();
-                existingAttendants = 0;
-                existingCabinChiefs = 0;
-                existingPilots = 0;
-            }
-        });
-
-        seq.addSubBehaviour(new DelayBehaviour(this, 1000) {});
-
-        seq.addSubBehaviour(new TickerBehaviour(this, 4000) {
-            protected void onTick() {
-
-                System.out.println("");
-                System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
-                        ", CABIN CHIEFS: " + existingCabinChiefs +
-                        ", ATTENDANTS: " + existingAttendants + "\n");
-
-                existingCrewMembers.clear();
-                existingAttendants = 0;
-                existingCabinChiefs = 0;
-                existingPilots = 0;
-            }
-        });
-
-        addBehaviour(seq);
     }
+}
 
-    private void sendMessage(AMSAgentDescription [] agents, String airportListString){
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setContent(airportListString);
+class CrewMemberValues {
+    public int id;
+    public float fl_tolerance;
+    public float crew_patience;
+    public int max_waiting_time;
+    public String rank;
+    public int exp;
+    public double max_offer;
+    public float happiness;
 
-        for (AMSAgentDescription agent : agents) {
-            if (agent.getName().getLocalName().startsWith("crew_member")) {
-                msg.addReceiver(agent.getName());
-            }
-        }
-
-
-        send(msg);
+    public CrewMemberValues(int id, float fl, float cp, int mwt, String r, int exp, double mo, float h) {
+        this.id = id;
+        this.fl_tolerance = fl;
+        this.crew_patience = cp;
+        this.max_waiting_time = mwt;
+        this.rank = r;
+        this.exp = exp;
+        this.max_offer = mo;
+        this.happiness = h;
     }
 }
