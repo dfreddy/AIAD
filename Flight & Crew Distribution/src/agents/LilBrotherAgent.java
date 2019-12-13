@@ -136,7 +136,7 @@ public class LilBrotherAgent extends Agent {
                     CrewMemberValues tmp_cmv = new CrewMemberValues(c_id,
                             Float.parseFloat(content[1]), Float.parseFloat(content[2]),
                             Integer.parseInt(content[3]), content[4],
-                            Integer.parseInt(content[5]), Float.parseFloat(content[6]));
+                            Integer.parseInt(content[5]), Double.parseDouble(content[6]));
 
                     if(tmp_cmv.happiness > 0)
                         crew_members_values.put(c_id, tmp_cmv);
@@ -155,9 +155,9 @@ class CrewMemberValues {
     public int max_waiting_time;
     public String rank;
     public int exp;
-    public float happiness;
+    public double happiness;
 
-    public CrewMemberValues(int id, float fl, float cp, int mwt, String r, int exp, float h) {
+    public CrewMemberValues(int id, float fl, float cp, int mwt, String r, int exp, double h) {
         this.id = id;
         this.fl_tolerance = fl;
         this.crew_patience = cp;

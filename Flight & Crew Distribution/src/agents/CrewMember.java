@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.*;
 
+import static java.lang.Integer.min;
 import static java.lang.Integer.parseInt;
 
 public class CrewMember extends Agent {
@@ -45,7 +46,7 @@ public class CrewMember extends Agent {
     private int flight_length_preference = rnd.nextInt(15) + 1;
     private float flight_length_tolerance = rnd.nextFloat() * 4 + 2; // 2 ~ 6 tolerable flight length difference
 
-    private int happiness = 0;
+    private double happiness = 0;
     private int id;
     /*
     Crew Member Values
@@ -70,18 +71,7 @@ public class CrewMember extends Agent {
         defineCrewRank();
         calculateExperience();
 
-        // send msg to lil brother
-        // resend msg after an offer is accepted, with updated happiness values
         id = Integer.parseInt(getLocalName().substring(11));
-        /*  NO NEED TO SEND THIS FIRST MSG
-        ACLMessage informLilBrother = new ACLMessage();
-        informLilBrother.setPerformative(ACLMessage.INFORM);
-        informLilBrother.addReceiver(new AID( "lil_brother",  AID.ISLOCALNAME ));
-        informLilBrother.setContent(id + "," + flight_length_tolerance + "," + crew_patience + "," + max_waiting_time/1000 +
-                                    "," + rank + "," + experience + "," + happiness);
-        send(informLilBrother);
-        // System.out.println(getLocalName() + " <- send msg to lil brother: " + informLilBrother.getContent());
-        */
 
         startBehaviours();
     }
@@ -248,10 +238,11 @@ public class CrewMember extends Agent {
     // ========================= Utility methods ========================= //
     void updateHappiness() {
         // TODO
-        //  get happiness values as (% diff between max offer and best final offer  &&  % diff between waiting time and max waiting time)
+        //  get happiness values as (% diff between min offer and best final offer  &&  % diff between waiting time and max waiting time)
 
-        // for now
-        happiness = 1;
+        // proposal / minOffer -> how good the proposal accepted was
+        // waiting_function -> how tired they were of waiting (+0.1 to prevent 0div)
+        happiness = (proposal / minOffer) / (waiting_function + 0.1);
     }
 
     void defineCrewRank(){
