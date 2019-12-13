@@ -8,6 +8,8 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
 
 import java.io.*;
 import java.util.HashMap;
@@ -19,21 +21,22 @@ import java.util.Map;
  */
 public class LilBrotherAgent extends Agent {
     private HashMap<Integer, CrewMemberValues> crew_members_values = new HashMap<Integer, CrewMemberValues>(); // Integer is the crew_member id
-    private int existingAirplanes;
+    private int existingAirplanes, existingCrewMembers;
+    private int airplane_counter = 1, crewmember_counter = 1;
+    private int max_airplanes = 3, max_crewmembers = 70;
     private PrintWriter writer;
+    private ContainerController cc;
 
     protected void setup()
     {
-        try {
-            FileWriter f = new FileWriter("crew_members.csv", true);
-            BufferedWriter b = new BufferedWriter(f);
-            writer = new PrintWriter(b);
-        }
-        catch (IOException e) {e.printStackTrace();}
+        cc = this.getContainerController();
 
-        addBehaviour(new TickerBehaviour(this, 3000) {
-            protected void onTick() {
+        // Creates agents if there's a need for new ones
+        addBehaviour(new CyclicBehaviour() {
+            public void action() {
+                // create agents when there's missing
                 existingAirplanes = 0;
+                existingCrewMembers = 0;
 
                 AMSAgentDescription [] agents = null;
                 try {
@@ -52,35 +55,75 @@ public class LilBrotherAgent extends Agent {
                     }
                 }
 
-                if(existingAirplanes == 0) {
-                    System.out.println(getLocalName() + " <- saving crew member values");
-                    // TODO
-                    //  export crew_member_values to csv
-                    StringBuilder sb = new StringBuilder();
-                    for (Map.Entry<Integer, CrewMemberValues> entry : crew_members_values.entrySet()) {
-                        CrewMemberValues tmp = entry.getValue();
-                        sb.append("\n");
-                        sb.append(tmp.id);
-                        sb.append(",");
-                        sb.append(tmp.fl_tolerance);
-                        sb.append(",");
-                        sb.append(tmp.crew_patience);
-                        sb.append(",");
-                        sb.append(tmp.max_waiting_time);
-                        sb.append(",");
-                        sb.append(tmp.rank);
-                        sb.append(",");
-                        sb.append(tmp.exp);
-                        sb.append(",");
-                        sb.append(tmp.happiness);
+                for(AMSAgentDescription mAgent : agents){
+                    if(mAgent.getName().getName().startsWith("crew_member")){
+                        existingCrewMembers++;
                     }
-                    writer.write(sb.toString());
-                    writer.close();
-                    doDelete();
                 }
+
+                // create airplanes
+                while(existingAirplanes < max_airplanes) {
+                    String name = "s" + airplane_counter;
+                    try {
+                        cc.createNewAgent(name, "agents.Airplane", null).start();
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+                    airplane_counter++;
+                    existingAirplanes++;
+                }
+
+                // create crew members
+                while(existingCrewMembers < max_crewmembers) {
+                    String name = "crew_member" + crewmember_counter;
+                    try {
+                        cc.createNewAgent(name, "agents.CrewMember", null).start();
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+                    crewmember_counter++;
+                    existingCrewMembers++;
+                }
+
             }
         });
 
+        // Exports crew members to csv
+        addBehaviour(new TickerBehaviour(this, 6000) {
+            protected void onTick() {
+                try {
+                    FileWriter f = new FileWriter("crew_members.csv", true);
+                    BufferedWriter b = new BufferedWriter(f);
+                    writer = new PrintWriter(b);
+                }
+                catch (IOException e) {e.printStackTrace();}
+
+                System.out.println(getLocalName() + " <- saving crew member values");
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<Integer, CrewMemberValues> entry : crew_members_values.entrySet()) {
+                    CrewMemberValues tmp = entry.getValue();
+                    sb.append("\n");
+                    sb.append(tmp.id);
+                    sb.append(",");
+                    sb.append(tmp.fl_tolerance);
+                    sb.append(",");
+                    sb.append(tmp.crew_patience);
+                    sb.append(",");
+                    sb.append(tmp.max_waiting_time);
+                    sb.append(",");
+                    sb.append(tmp.rank);
+                    sb.append(",");
+                    sb.append(tmp.exp);
+                    sb.append(",");
+                    sb.append(tmp.happiness);
+                }
+                writer.write(sb.toString());
+                writer.close();
+                crew_members_values.clear();
+            }
+        });
+
+        // Checks existing agents
         addBehaviour(new CyclicBehaviour() {
             public void action() {
                 ACLMessage msg = receive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
@@ -95,9 +138,10 @@ public class LilBrotherAgent extends Agent {
                             Integer.parseInt(content[3]), content[4],
                             Integer.parseInt(content[5]), Float.parseFloat(content[6]));
 
-                    crew_members_values.put(c_id, tmp_cmv);
-                    System.out.println("\t\t\t\t\t\t\t\t" + getLocalName() +
-                            " <- received: " + tmp_cmv.toString());
+                    if(tmp_cmv.happiness > 0)
+                        crew_members_values.put(c_id, tmp_cmv);
+
+                    // System.out.println("\t\t\t\t\t\t\t\t" + getLocalName() + " <- received: " + tmp_cmv.toString());
                 }
                 else block();
             }

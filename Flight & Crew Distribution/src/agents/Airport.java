@@ -40,27 +40,16 @@ public class Airport {
             if (p.getBooleanProperty("main", true)) {
                 ContainerController containerController = Runtime.instance().createMainContainer(p);
 
-
                 AgentController bigBrotherController = containerController.createNewAgent("big_brother", "agents.BigBrotherAgent", null);
                 bigBrotherController.start();
                 AgentController lilBrotherController = containerController.createNewAgent("lil_brother", "agents.LilBrotherAgent", null);
                 lilBrotherController.start();
 
-                // create agents: 1 airplane "s1" and 1 crew member "crew_member"
-                AgentController airplaneController = containerController.createNewAgent("s1", "agents.Airplane", null);
-                airplaneController.start();
                 /*
-                airplaneController = containerController.createNewAgent("s2", "agents.Airplane", null);
-                airplaneController.start();
-                airplaneController = containerController.createNewAgent("s3", "agents.Airplane", null);
-                airplaneController.start();
-                 */
-
-                for(int i=0; i<30; i++) {
-                    String name = "crew_member" + i;
-                    AgentController crewmemberController = containerController.createNewAgent(name, "agents.CrewMember", null);
-                    crewmemberController.start();
+                while(true) {
+                    startAgents(containerController);
                 }
+                */
 
             } else {
                 Runtime.instance().createAgentContainer(p);
@@ -83,6 +72,25 @@ public class Airport {
 
     public Airport() {
     }
+
+    /* NO LONGER NEEDED
+    // creates the needed number of agents n updates the number of existing agents
+    public static void startAgents(ContainerController containerController) throws StaleProxyException {
+        for(int i=0; i < need_airplanes; i++) {
+            nr_airplanes++;
+            String name = "s" + nr_airplanes;
+            AgentController airplaneController = containerController.createNewAgent(name, "agents.Airplane", null);
+            airplaneController.start();
+        }
+
+        for(int i=0; i < need_crewmembers; i++) {
+            nr_crewmembers++;
+            String name = "crew_member" + nr_crewmembers;
+            AgentController crewmemberController = containerController.createNewAgent(name, "agents.CrewMember", null);
+            crewmemberController.start();
+        }
+    }
+     */
 
     public static void testCrewPersonality(){
         int s = 0, m=0, l=0, d=0;

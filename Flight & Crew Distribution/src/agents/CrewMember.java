@@ -73,6 +73,7 @@ public class CrewMember extends Agent {
         // send msg to lil brother
         // resend msg after an offer is accepted, with updated happiness values
         id = Integer.parseInt(getLocalName().substring(11));
+        /*  NO NEED TO SEND THIS FIRST MSG
         ACLMessage informLilBrother = new ACLMessage();
         informLilBrother.setPerformative(ACLMessage.INFORM);
         informLilBrother.addReceiver(new AID( "lil_brother",  AID.ISLOCALNAME ));
@@ -80,7 +81,7 @@ public class CrewMember extends Agent {
                                     "," + rank + "," + experience + "," + happiness);
         send(informLilBrother);
         // System.out.println(getLocalName() + " <- send msg to lil brother: " + informLilBrother.getContent());
-
+        */
 
         startBehaviours();
     }
