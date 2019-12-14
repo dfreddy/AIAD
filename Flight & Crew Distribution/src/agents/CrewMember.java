@@ -241,8 +241,9 @@ public class CrewMember extends Agent {
         //  get happiness values as (% diff between min offer and best final offer  &&  % diff between waiting time and max waiting time)
 
         // proposal / minOffer -> how good the proposal accepted was
+        // proposal / maxOffer ^2 -> how good the proposal was compared to the max
         // waiting_function -> how tired they were of waiting (+0.1 to prevent 0div)
-        happiness = (proposal / minOffer) / (waiting_function + 0.1);
+        happiness = ((proposal / minOffer) * Math.pow(proposal / maxOffer, 2)) / (waiting_function + 0.1);
     }
 
     void defineCrewRank(){
