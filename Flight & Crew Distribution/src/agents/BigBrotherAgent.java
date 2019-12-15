@@ -84,11 +84,12 @@ public class BigBrotherAgent extends Agent {
         seq.addSubBehaviour(new DelayBehaviour(this, 1000) {
             public void handleElapsedTimeout() {
 
+                /*
                 System.out.println("");
                 System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
                         ", CABIN CHIEFS: " + existingCabinChiefs +
                         ", ATTENDANTS: " + existingAttendants + "\n");
-
+                */
                 existingCrewMembers.clear();
                 existingAttendants = 0;
                 existingCabinChiefs = 0;
@@ -101,10 +102,10 @@ public class BigBrotherAgent extends Agent {
         seq.addSubBehaviour(new TickerBehaviour(this, 5000) {
             protected void onTick() {
 
-                System.out.println("");
-                System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
-                        ", CABIN CHIEFS: " + existingCabinChiefs +
-                        ", ATTENDANTS: " + existingAttendants + "\n");
+                //System.out.println("");
+                //System.out.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getLocalName() + " <- PILOTS: " + existingPilots +
+                //       ", CABIN CHIEFS: " + existingCabinChiefs +
+                //        ", ATTENDANTS: " + existingAttendants + "\n");
 
                 existingCrewMembers.clear();
                 existingAttendants = 0;

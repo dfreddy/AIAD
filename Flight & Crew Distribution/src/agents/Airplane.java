@@ -44,7 +44,7 @@ public class Airplane extends Agent {
         attributeFlightType();
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
 
-        System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
+        // System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
@@ -97,7 +97,7 @@ public class Airplane extends Agent {
                     addBehaviour(new WakerBehaviour(myAgent, 5000) {
                         protected void onWake() {
                             if(available_spots > 0)
-                                System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
+                                // System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
 
                             handleBiz(receivedTransactions);
                             receivedTransactions.clear();
@@ -127,6 +127,21 @@ public class Airplane extends Agent {
             return;
         }
 
+        /*
+        String trans_list = "";
+        if(currentTransactions.size() > 0) {
+            Iterator itt = currentTransactions.entrySet().iterator();
+            while (itt.hasNext()) {
+                Map.Entry pair = (Map.Entry) itt.next();
+                if (pair.getKey() == null) continue;
+                ACLMessage tmp_msg = (ACLMessage) pair.getKey();
+                AID receiver = (AID) (tmp_msg.getAllReceiver().next());
+                trans_list += receiver.getLocalName().substring(11) + ",";
+            }
+        }
+        System.out.println(getLocalName() + " <- transaction list: " + trans_list);
+        */
+
         // decide what's the best offer to accept
         // considers every offer, starting wit the CrewMembers wit higher rank, in a loop where the available_budget/spots is updated accordingly
         ArrayList<ACLMessage> finishedTransactions;
@@ -138,6 +153,7 @@ public class Airplane extends Agent {
             double best_rating = 0;
             ACLMessage best_proposal = null;
             String best_position = null;
+            int best_prop = 0;
 
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
@@ -148,12 +164,14 @@ public class Airplane extends Agent {
                 ACLMessage tmp_msg = (ACLMessage) pair.getKey();
 
                 Map.Entry pair2 = (Map.Entry) it2.next();
-                double rating = getProposalRating((Integer) pair2.getKey(), (String) pair2.getValue(), Integer.parseInt(tmp_msg.getContent()));
+                int prop = Integer.parseInt(tmp_msg.getContent());
+                double rating = getProposalRating((Integer) pair2.getKey(), (String) pair2.getValue(), prop);
 
                 // AID receiver = (AID)(tmp_msg.getAllReceiver().next());
                 // System.out.println(getLocalName() + "<- rating for " + receiver.getLocalName() + " (" + (String) pair2.getValue() + ") is: " + rating);
 
                 if (rating >= best_rating) {
+                    best_prop = prop;
                     best_rating = rating;
                     best_proposal = tmp_msg;
                     best_position = (String) pair2.getValue();
@@ -166,13 +184,14 @@ public class Airplane extends Agent {
 
             // System.out.println(getLocalName() + " <- best rating = " + best_rating);
 
-            if (best_rating >= 0.7 && best_position != null && best_proposal != null) {
+            if (best_rating >= 0.6 && best_position != null && best_proposal != null) {
                 // if accepted
                 switch (best_position) {
                     case "PILOT":
                         if(remainingPilotSpots > 0) {
                             remainingPilotSpots--;
                             best_proposal.setPerformative(ACLMessage.AGREE);
+                            best_proposal.setContent(best_prop + "");
                             crew.add((AID) best_proposal.getAllReceiver().next());
                         }
                         break;
@@ -180,6 +199,7 @@ public class Airplane extends Agent {
                         if(remainingCabinChiefSpots > 0) {
                             remainingCabinChiefSpots--;
                             best_proposal.setPerformative(ACLMessage.AGREE);
+                            best_proposal.setContent(best_prop + "");
                             crew.add((AID) best_proposal.getAllReceiver().next());
                         }
                         break;
@@ -187,6 +207,7 @@ public class Airplane extends Agent {
                         if(remainingAttendantsSpots > 0) {
                             remainingAttendantsSpots--;
                             best_proposal.setPerformative(ACLMessage.AGREE);
+                            best_proposal.setContent(best_prop + "");
                             crew.add((AID) best_proposal.getAllReceiver().next());
                         }
                         break;
@@ -220,19 +241,19 @@ public class Airplane extends Agent {
             System.out.println(getLocalName() + " <- employed " + diff);
 
         if (available_spots == 0 && time_to_takeoff <= 0) {
-            System.out.println(getLocalName() + " <- TOOK OFF");
+            // System.out.println(getLocalName() + " <- TOOK OFF");
             doDelete();
         }
 
         if (available_spots > 0 && time_to_takeoff <= 0) {
             System.out.println(getLocalName() + " <- couldn't fly. Missing " + remainingPilotSpots + " PILOTS, " +
-                    remainingCabinChiefSpots + " CABIN CHIEFS and " + remainingAttendantsSpots + " ATTENDANTS.");
+                   remainingCabinChiefSpots + " CABIN CHIEFS and " + remainingAttendantsSpots + " ATTENDANTS.");
             doDelete();
         }
 
         if (time_to_takeoff > 0 && !last_cycle) {
-            // System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
-            System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
+            //System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
+            //System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
     }
 
@@ -277,13 +298,13 @@ public class Airplane extends Agent {
     //Price varies between 12-15€ per hour flying
     public double calcMaxRealFlightHourPrice() {
         Random rnd = newRandom();
-        return rnd.nextInt((15-12) + 1) + 12;
+        return rnd.nextInt((13-10) + 1) + 10;
     }
 
     //Price varies between 6-8€ per hour in connection
     public double calcMaxConnectionHourPrice() {
         Random rnd = newRandom();
-        return rnd.nextInt((8-6) + 1) + 6;
+        return rnd.nextInt((9-5) + 1) + 5;
     }
 
     // this func calculated an percentage of valueOfExperience to be used in the calculation of the maxOffer (calculateMaxOffer)
@@ -294,9 +315,9 @@ public class Airplane extends Agent {
         double valueForExperience;
 
         if(experience < 40){
-            valueForExperience = 0.7;
+            valueForExperience = 0.5;
         }else{
-            valueForExperience = (experience-40d)/100d + 0.7;
+            valueForExperience = (experience-40d)/100d + 0.5;
 
             if(valueForExperience > 1)
                 valueForExperience = 1;
@@ -314,7 +335,7 @@ public class Airplane extends Agent {
         double maxOffer;
         double valueForExperience = calculateValueForExperience(experience);
 
-        maxOffer = 10 * ((valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice)) / totalFlightTime;
+        maxOffer = ((valueForExperience*maxRealFlightHourPrice*flightsTime) + (connectionTime * maxConnectionHourPrice)) / totalFlightTime;
 
         if(rank == "PILOT"){
             maxOffer = maxOffer + (maxOffer*0.5);
@@ -347,7 +368,7 @@ public class Airplane extends Agent {
         //generates the flightsTime and totalFlightTime
         flightsTime = rnd.nextInt((int) ((maxFlightTime - connectionTime) - minFlightTime) + 1) + minFlightTime + rnd.nextDouble();
         totalFlightTime = flightsTime + connectionTime;
-        System.out.println(getLocalName() + " <- total flight time = " + totalFlightTime);
+        // System.out.println(getLocalName() + " <- total flight time = " + totalFlightTime);
     }
 
     // Attributes the FlightType, which is important to generate the necessary crew for each flight and its experience
@@ -395,11 +416,12 @@ public class Airplane extends Agent {
         percent_time_to_takeoff = percent_time_to_takeoff / 100;
 
         double maxOffer = calculateMaxOffer(exp, rank);
-        double minOffer = maxOffer / 5;
+        double minOffer = maxOffer / 2;
 
         // time left until takeoff has more influence on salary variation
-        sal = (int) (minOffer + (maxOffer-minOffer) * percent_time_to_takeoff);
+        sal = (int) (minOffer + ((maxOffer-minOffer) * percent_time_to_takeoff * 1.2));
 
+        // if(sal > 20) System.out.println(getLocalName() + " <- sal = " + sal + ", maxOffer = " + maxOffer + ", takeoff = " + percent_time_to_takeoff);
         return sal;
     }
 
