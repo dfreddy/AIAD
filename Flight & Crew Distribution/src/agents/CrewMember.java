@@ -98,21 +98,47 @@ public class CrewMember extends Agent {
                 MessageTemplate.MatchPerformative( ACLMessage.INFORM ),
                 MessageTemplate.MatchSender( new AID( "big_brother",  AID.ISLOCALNAME )));
 
-        airplaneNameList.clear();
+        addBehaviour(new CyclicBehaviour() {
+            public void action() {
+                ACLMessage msg = receive(templateBigBrother);
 
-        addBehaviour(new ReceiverBehaviour(this, 1000, templateBigBrother){
-            @Override
-            public void handle(ACLMessage msg) {
                 if (msg != null ) {
+                    airplaneNameList.clear();
                     String [] newAirplaneName = msg.getContent().split(";");
+                    // System.out.println(getLocalName() + " <- airplane list: " + msg.getContent());
 
                     for(String s : newAirplaneName) {
                         // System.out.println(getLocalName() + " <- Airplane: " + s);
                         airplaneNameList.add(s);
                     }
 
-                    if(airplaneNameList.size() > 0)
+                    if(airplaneNameList.size() > 0) {
+                        // System.out.println(getLocalName() + " <- airplane list: " + airplaneNameList);
                         startNegotiating();
+                    }
+
+                }
+                else block();
+            }
+        });
+
+        /*
+        addBehaviour(new ReceiverBehaviour(this, 1000, templateBigBrother){
+            @Override
+            public void handle(ACLMessage msg) {
+                if (msg != null ) {
+                    String [] newAirplaneName = msg.getContent().split(";");
+                    System.out.println(getLocalName() + " <- airplane list: " + msg.getContent());
+
+                    for(String s : newAirplaneName) {
+                        // System.out.println(getLocalName() + " <- Airplane: " + s);
+                        airplaneNameList.add(s);
+                    }
+
+                    if(airplaneNameList.size() > 0) {
+                        // System.out.println(getLocalName() + " <- airplane list: " + airplaneNameList);
+                        startNegotiating();
+                    }
                     else
                         addBigBrotherListener();
                 }
@@ -120,6 +146,7 @@ public class CrewMember extends Agent {
                 else addBigBrotherListener();
             }
         });
+        */
     }
 
     private void startNegotiating() {

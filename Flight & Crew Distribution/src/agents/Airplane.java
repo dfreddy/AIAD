@@ -213,7 +213,8 @@ public class Airplane extends Agent {
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
         diff = diff - available_spots;
 
-        boolean last_cycle = available_spots == 0 && diff == 0;
+        boolean last_cycle = (available_spots == 0 && diff == 0);
+        // System.out.println(getLocalName() + " <- last cycle?= " + last_cycle);
 
         if (!last_cycle)
             System.out.println(getLocalName() + " <- employed " + diff);
@@ -230,7 +231,7 @@ public class Airplane extends Agent {
         }
 
         if (time_to_takeoff > 0 && !last_cycle) {
-            System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
+            // System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
             System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
     }

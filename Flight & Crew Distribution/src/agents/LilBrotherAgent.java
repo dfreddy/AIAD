@@ -23,7 +23,7 @@ public class LilBrotherAgent extends Agent {
     private HashMap<Integer, CrewMemberValues> crew_members_values = new HashMap<Integer, CrewMemberValues>(); // Integer is the crew_member id
     private int existingAirplanes, existingCrewMembers;
     private int airplane_counter = 1, crewmember_counter = 1;
-    private int max_airplanes = 3, max_crewmembers = 70;
+    private int max_airplanes = 4, max_crewmembers = 90;
     private PrintWriter writer;
     private ContainerController cc;
 
@@ -65,6 +65,7 @@ public class LilBrotherAgent extends Agent {
                 while(existingAirplanes < max_airplanes) {
                     String name = "s" + airplane_counter;
                     try {
+                        System.out.println(getLocalName() + " <- creating airplane " + name);
                         cc.createNewAgent(name, "agents.Airplane", null).start();
                     } catch (StaleProxyException e) {
                         e.printStackTrace();
@@ -77,6 +78,7 @@ public class LilBrotherAgent extends Agent {
                 while(existingCrewMembers < max_crewmembers) {
                     String name = "crew_member" + crewmember_counter;
                     try {
+                        // System.out.println(getLocalName() + " <- creating crewmember " + name);
                         cc.createNewAgent(name, "agents.CrewMember", null).start();
                     } catch (StaleProxyException e) {
                         e.printStackTrace();
