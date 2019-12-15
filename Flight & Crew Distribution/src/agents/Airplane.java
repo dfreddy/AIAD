@@ -15,7 +15,7 @@ import java.util.Set;
 public class Airplane extends Agent {
     private Random rnd = newRandom();
     private int available_spots,
-            initial_time_to_takeoff = 15000 + 5000 * (rnd.nextInt(5)), // initial time until takeoff varies between 15s and 40s
+            initial_time_to_takeoff = 10000 + 5000 * (rnd.nextInt(5)), // initial time until takeoff varies between 10s and 35s
             time_to_takeoff = initial_time_to_takeoff,
             spent_budget = 0;
 
@@ -44,7 +44,7 @@ public class Airplane extends Agent {
         attributeFlightType();
         available_spots = remainingAttendantsSpots + remainingCabinChiefSpots + remainingPilotSpots;
 
-        // System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
+        System.out.println(getLocalName() + " <- time to takeoff = " + time_to_takeoff / 1000 + "s");
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
@@ -96,9 +96,10 @@ public class Airplane extends Agent {
                     // wait to receive transactions
                     addBehaviour(new WakerBehaviour(myAgent, 5000) {
                         protected void onWake() {
-                            if(available_spots > 0)
+                            if(available_spots > 0) {
                                 // System.out.println(getLocalName() + " received " + receivedTransactions.size() + " transactions");
-
+                            }
+                            
                             handleBiz(receivedTransactions);
                             receivedTransactions.clear();
                         }
@@ -184,7 +185,7 @@ public class Airplane extends Agent {
 
             // System.out.println(getLocalName() + " <- best rating = " + best_rating);
 
-            if (best_rating >= 0.6 && best_position != null && best_proposal != null) {
+            if (best_rating >= 0.5 && best_position != null && best_proposal != null) {
                 // if accepted
                 switch (best_position) {
                     case "PILOT":
@@ -235,13 +236,14 @@ public class Airplane extends Agent {
         diff = diff - available_spots;
 
         boolean last_cycle = (available_spots == 0 && diff == 0);
-        // System.out.println(getLocalName() + " <- last cycle?= " + last_cycle);
+        System.out.println(getLocalName() + " <- last cycle?= " + last_cycle);
 
-        if (!last_cycle)
-            System.out.println(getLocalName() + " <- employed " + diff);
+        if (!last_cycle) {
+            System.out.println(getLocalName() + " <- employed " + diff + ", needs " + available_spots);
+        }
 
         if (available_spots == 0 && time_to_takeoff <= 0) {
-            // System.out.println(getLocalName() + " <- TOOK OFF");
+            System.out.println(getLocalName() + " <- TOOK OFF");
             doDelete();
         }
 
@@ -252,8 +254,8 @@ public class Airplane extends Agent {
         }
 
         if (time_to_takeoff > 0 && !last_cycle) {
-            //System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
-            //System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
+            // System.out.println(getLocalName() + " <- NEEDS PILOTS: " + remainingPilotSpots + ", CABIN CHIEF: " + remainingCabinChiefSpots + ", ATTENDANTS: " + remainingAttendantsSpots);
+            System.out.println(getLocalName() + " <- time to takeoff is now " + time_to_takeoff / 1000 + "s");
         }
     }
 

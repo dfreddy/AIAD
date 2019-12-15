@@ -286,7 +286,7 @@ public class CrewMember extends Agent {
         // fl_multipler -> how close the flight length is to the preference
         // waiting_function -> how tired they were of waiting
         happiness = (((best_prop / bestMinOffer) + (best_prop / bestMaxOffer)/2) * bestFLmultiplier) / ((2*waiting_function/crew_patience) + 1d);
-        if(happiness > 0) {
+        if(happiness < 0) {
             System.out.println(getLocalName() + " <- happiness = " + happiness + ", proposal = " + best_prop + ", minOffer = " + bestMinOffer +
                     ", maxOffer = " + bestMaxOffer + ",fl_multiplier = " + bestFLmultiplier + ", waiting = " + ((2*waiting_function/crew_patience) + 1d));
         }
