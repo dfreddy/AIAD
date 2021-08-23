@@ -1,7 +1,13 @@
 # AIAD
 ## Flight &amp; Crew Distribution: Utility Based Multi Agent System 
 
+Multi-agent system that simulates the attribution of pilots and other crew members to flights, in a given airport.
+
 [PowerPoint](https://docs.google.com/presentation/d/1yG94WNCDLMswl1D4H3JhwyKTZkUZMM1s5UMv0yAj5R4/edit?usp=sharing)
+
+## Tech Stack
+
+Java, Jade
 
 ### Agents
 - Crew Members - Airplanes 
